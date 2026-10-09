@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "check": "node --check src/index.js",
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check src/index.js && node --check src/consent.js && node --check src/core.js && npm test",
+    "smoke": "node test/smoke.mjs",
     "deploy": "wrangler deploy"
   },
   "dependencies": {
