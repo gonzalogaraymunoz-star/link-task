@@ -1,0 +1,17 @@
+{
+  "name": "link-task",
+  "version": "0.5.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "check": "node --check src/index.js",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^1.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.38.0"
+  }
+}
