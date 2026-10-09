@@ -1,5 +1,5 @@
 
-export const consentScript = String.raw\`
+export const consentScript = String.raw`
 const $=id=>document.getElementById(id);
 const form=$('oauth-consent'), message=$('message');
 const approve=$('approve'), deny=$('deny'), details=$('supabase-config');
@@ -33,4 +33,4 @@ async function send(decision){
 }
 approve.addEventListener('click',e=>{e.preventDefault();send('approve')});
 deny.addEventListener('click',e=>{e.preventDefault();send('deny')});
-\`;
+`;
