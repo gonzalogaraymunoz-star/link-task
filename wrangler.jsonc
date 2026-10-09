@@ -1,0 +1,18 @@
+{
+  "name": "link-task-mcp",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-09",
+  "compatibility_flags": [
+    "global_fetch_strictly_public"
+  ],
+  "workers_dev": true,
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "963d8b57030f47f4bad13dbf960ab288"
+    }
+  ],
+  "vars": {
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_RE_eqhBaLeaUMHuBjLUY2Q_OZNBm9_A"
+  }
+}
