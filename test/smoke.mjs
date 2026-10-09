@@ -1,0 +1,24 @@
+
+import assert from 'node:assert/strict';
+const host='https://link-task-mcp.gonzalogaraymunoz.workers.dev';
+const metadata=await fetch(host+'/.well-known/oauth-authorization-server');
+assert.equal(metadata.status,200,'OAuth metadata must be available');
+const oauth=await metadata.json();
+assert.equal(oauth.issuer,host,'OAuth issuer should match the actual Worker URL');
+assert.equal(oauth.authorization_endpoint,host+'/authorize');
+assert.equal(oauth.token_endpoint,host+'/oauth/token');
+assert.equal(oauth.registration_endpoint,host+'/oauth/register');
+assert.equal(oauth.code_challenge_methods_supported.includes('S256'),true);
+const protectedResource=await fetch(host+'/.well-known/oauth-protected-resource/mcp');
+assert.equal(protectedResource.status,200,'MCP resource metadata must be available');
+const info=await protectedResource.json();
+assert.equal(info.resource,host+'/mcp');
+assert.equal(info.authorization_servers.includes(host),true);
+const unauth=await fetch(host+'/mcp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize'})});
+assert.equal(unauth.status,401,'MCP must reject unauthenticated clients');
+assert.match(unauth.headers.get('www-authenticate')||'',/resource_metadata|Bearer/i);
+const health=await fetch(host+'/health');
+assert.equal(health.status,200);
+const state=await health.json();
+assert.equal(state.oauth,true);
+console.log('MCP smoke test OK: discovery, PKCE, protected resource, unauthorized 401, health');
