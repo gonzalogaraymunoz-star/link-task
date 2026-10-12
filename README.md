@@ -40,3 +40,22 @@ El valor `SUPABASE_PUBLISHABLE_KEY` es una **clave publicable**, no un secreto. 
 - La autorización inicial puede pedir contraseña de Supabase aunque el usuario ya esté conectado a la web; son dominios diferentes.
 - En esta versión, al vencer el JWT de Supabase posiblemente será necesario autorizar otra vez. Implementar renovación de sesión segura antes del escalamiento multiusuario.
 - Hacer pruebas de revocación, desconexión y separación entre dos usuarios antes de ofrecer el producto a terceros.
+
+
+## Google Tasks (rama de prueba, no desplegada)
+
+El MCP incluye `google_connect`, `google_tasklists`, `google_tasks_list`, `google_task_create` y `google_disconnect`.
+El usuario abre el enlace generado por `google_connect` y concede acceso a Google Tasks.
+La ruta de retorno configurada en el Worker es:
+
+`https://link-task-mcp.gonzalogaraymunoz.workers.dev/google/callback`
+
+**En Google Cloud**: habilitar Google Tasks API, crear cliente OAuth tipo aplicación web, configurar la URI de redirección anterior y añadir el usuario como usuario de prueba cuando corresponda.
+
+**En Cloudflare → Worker link-task-mcp → Configuración → Variables y secretos**, cargar como secretos (NO variables públicas):
+- `GOOGLE_CLIENT_ID`: identificador de cliente OAuth.
+- `GOOGLE_CLIENT_SECRET`: secreto de ese cliente OAuth.
+- `GOOGLE_TOKEN_ENCRYPTION_KEY`: 32 bytes aleatorios codificados en base64, generados localmente. No reutilizar secretos existentes.
+
+La cuenta Google se vincula por el usuario autenticado de Supabase; el refresh token cifrado se guarda en el namespace KV `OAUTH_KV`. No se exponen credenciales a ChatGPT.
+**No declarar completado** hasta probar con cuenta real y validar lectura/creación de una tarea. Calendar y Pulso Vivo todavía no están integrados a estos nuevos comandos.

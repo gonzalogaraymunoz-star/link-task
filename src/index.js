@@ -2,6 +2,7 @@
 import {OAuthProvider, AuthorizationError, insufficientScope} from '@cloudflare/workers-oauth-provider';
 import {APP,SUPA,HOST,RESOURCE,READ,WRITE,TOOLS,getUser,runTool} from './core.js';
 import {consentScript} from './consent.js';
+import {googleTool,googleCallback} from './google-tasks.js';
 
 const json=(data,status=200,extra={})=>new Response(JSON.stringify(data),{
  status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...extra}
@@ -112,13 +113,15 @@ const mcpHandler={async fetch(request,env,ctx){
  const isRead=!!tool.annotations?.readOnlyHint;
  if(!ctx.auth.scope.includes(isRead?READ:WRITE))return insufficientScope(ctx.auth,[READ,WRITE]);
  const args=body.params?.arguments;
- const values=await runTool(name,args&&typeof args==='object'&&!Array.isArray(args)?args:{},user,upstreamJwt,env);
+ const normalized=args&&typeof args==='object'&&!Array.isArray(args)?args:{};
+ const values=name.startsWith('google_')?await googleTool(name,normalized,user,env):await runTool(name,normalized,user,upstreamJwt,env);
  return reply(body.id,{content:[{type:'text',text:JSON.stringify(values.data)}],isError:!values.ok});
 }};
 
 const defaultHandler={async fetch(request,env){
  const path=new URL(request.url).pathname;
  try{
+  if(path==='/google/callback'&&request.method==='GET')return googleCallback(request,env);
   if(path==='/health')return json({service:'LINK TASK MCP',status:'ready',version:'0.5.0',tools:TOOLS.length,oauth:true});
   if(path==='/consent.js')return new Response(consentScript,{headers:{'content-type':'text/javascript; charset=utf-8','cache-control':'no-store'}});
   if(path==='/authorize')return handleAuthorize(request,env);

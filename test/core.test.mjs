@@ -7,9 +7,9 @@ const user={id:'11111111-1111-4111-8111-111111111111',email:'test@example.org'};
 let original;
 test.beforeEach(()=>{original=globalThis.fetch});
 test.afterEach(()=>{globalThis.fetch=original});
-test('define seis herramientas MCP',()=>{
- assert.deepEqual(TOOLS.map(t=>t.name),['get_workspace','list_sessions','get_insights','start_session','end_session','record_work']);
- assert.equal(TOOLS.filter(t=>t.annotations.readOnlyHint).length,3);
+test('define once herramientas MCP',()=>{
+ assert.deepEqual(TOOLS.map(t=>t.name),['get_workspace','list_sessions','get_insights','start_session','end_session','record_work','google_connect','google_tasklists','google_tasks_list','google_task_create','google_disconnect']);
+ assert.equal(TOOLS.filter(t=>t.annotations.readOnlyHint).length,6);
 });
 test('no se acepta identidad si falta JWT',async()=>{
  assert.equal(await getUser('',env),null);

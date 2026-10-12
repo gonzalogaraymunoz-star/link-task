@@ -1,0 +1,18 @@
+name: LINK TASK checks
+on:
+  pull_request:
+  push:
+    branches:
+      - feature/google-tasks-oauth-20261012
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npm run check
