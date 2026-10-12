@@ -66,7 +66,7 @@ export async function googleTool(name,args,user,env){
    const task={title:args.title.trim().slice(0,500)};
    if(typeof args.notes==='string')task.notes=args.notes.slice(0,4000);
    if(args.due){
-    if(typeof args.due!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(args.due)||Number.isNaN(Date.parse(args.due)))return {ok:false,data:{error:'due_must_be_yyyy_mm_dd'}};
+    if(typeof args.due!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(args.due)||Number.isNaN(Date.parse(args.due)))return {ok:false,data:{error:'due_must_be_yyyy_mm_dd'}};
     task.due=args.due+'T00:00:00.000Z';
    }
    return call('/lists/'+encodeURIComponent(args.tasklist_id)+'/tasks',{method:'POST',body:JSON.stringify(task)});
