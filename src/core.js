@@ -12,6 +12,13 @@ export const TOOLS=[
 {name:'end_session',description:'Cerrar una sesión activa y guardar resultado.',inputSchema:{type:'object',properties:{id:{type:'string'},result:{type:'string'}},required:['id'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}},
 {name:'record_work',description:'Registrar una actividad completada sin duración medida. Ejecutar solo por solicitud del usuario.',inputSchema:{type:'object',properties:{title:{type:'string'},category:{type:'string'},result:{type:'string'},client_event_id:{type:'string'}},required:['title'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}}
 ];
+TOOLS.push(
+{name:'google_connect',description:'Generar enlace de autorización Google Tasks para el usuario autenticado. Abrir URL para conectar.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true}},
+{name:'google_tasklists',description:'Consultar listas de Google Tasks del usuario conectado.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true}},
+{name:'google_tasks_list',description:'Consultar tareas pendientes de una lista Google Tasks.',inputSchema:{type:'object',properties:{tasklist_id:{type:'string'}},required:['tasklist_id'],additionalProperties:false},annotations:{readOnlyHint:true}},
+{name:'google_task_create',description:'Crear una tarea en Google Tasks, solo con solicitud explícita del usuario.',inputSchema:{type:'object',properties:{tasklist_id:{type:'string'},title:{type:'string'},notes:{type:'string'},due:{type:'string',description:'Fecha YYYY-MM-DD'}},required:['tasklist_id','title'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}},
+{name:'google_disconnect',description:'Desconectar credenciales Google Tasks del usuario, solo por solicitud explícita.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:true}}
+);
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const str=(s,max)=>typeof s==='string'?s.trim().slice(0,max):'';
 export async function getUser(jwt,env){
