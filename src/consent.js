@@ -20,7 +20,7 @@ async function send(decision){
    if(!response.ok||!data.access_token)throw Error(data.error_description||'No se pudo verificar tu sesión.');
    jwt=data.access_token;
   }
-  const scope=[...form.querySelectorAll('input[name=\"scope\"]:checked')].map(x=>x.value);
+  const scope=[...document.querySelectorAll('input[name=\"scope\"]:checked')].map(x=>x.value);
   const res=await fetch('/authorize',{
    method:'POST',credentials:'same-origin',
    headers:{'content-type':'application/json',...(jwt?{authorization:'Bearer '+jwt}:{})},
