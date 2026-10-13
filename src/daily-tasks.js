@@ -17,6 +17,15 @@ async function materialize(record,env,clock=new Date()){
  const done=await env.OAUTH_KV.get(statusKey);
  if(done)return {ok:true,date,already_created:true,task_id:done};
  const user={id:record.userId};
+ if(!record.listId){
+  // A pending routine can be seeded by the trusted owner without using a stale MCP tool catalog.
+  // The user still needs a valid, separately consented Google Tasks grant.
+  const list=await googleTool('google_tasklist_create',{title:record.listTitle},user,env);
+  if(!list.ok)return list;
+  record.listId=list.data.id;
+  record.listTitle=list.data.title;
+  await env.OAUTH_KV.put(recordKey(record.id),JSON.stringify(record));
+ }
  const existing=await googleTool('google_tasks_list',{tasklist_id:record.listId,due_date:date},user,env);
  if(!existing.ok)return existing;
  const match=(existing.data.items||[]).find(t=>String(t.notes||'').includes(marker(record.id)));
