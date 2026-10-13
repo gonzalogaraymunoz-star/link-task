@@ -8,7 +8,7 @@ function status(x){message.textContent=x;}
 async function send(decision){
  approve.disabled=true; deny.disabled=true; status('Procesando…');
  try{
-  let jwt='';
+  let jwt='',refreshToken='',expiresIn=0;
   if(decision==='approve'){
    const email=$('email').value.trim(),password=$('password').value;
    if(!email||!password)throw Error('Introduce tu correo y contraseña LINK.');
@@ -19,12 +19,15 @@ async function send(decision){
    const data=await response.json().catch(()=>({}));
    if(!response.ok||!data.access_token)throw Error(data.error_description||'No se pudo verificar tu sesión.');
    jwt=data.access_token;
+   refreshToken=data.refresh_token||'';
+   expiresIn=data.expires_in||3600;
+   if(!refreshToken)throw Error('Supabase no entregó credencial renovable.');
   }
   const scope=[...document.querySelectorAll('input[name=\"scope\"]:checked')].map(x=>x.value);
   const res=await fetch('/authorize',{
    method:'POST',credentials:'same-origin',
    headers:{'content-type':'application/json',...(jwt?{authorization:'Bearer '+jwt}:{})},
-   body:JSON.stringify({decision,handle:form.elements.handle.value,scope})
+   body:JSON.stringify({decision,handle:form.elements.handle.value,scope,refreshToken,expiresIn})
   });
   const data=await res.json().catch(()=>({}));
   if(!res.ok||!data.redirect)throw Error(data.error||'No se pudo autorizar.');
