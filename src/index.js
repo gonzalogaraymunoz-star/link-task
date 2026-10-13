@@ -4,7 +4,7 @@ import {APP,SUPA,HOST,RESOURCE,READ,WRITE,TOOLS,getUser,runTool} from './core.js
 import {consentScript} from './consent.js';
 import {googleTool,googleCallback} from './google-tasks.js';
 import {createAuthSession,resolveAuthSession} from './auth-session.js';
-import {createDailyRoutine,runDailyRoutines} from './daily-tasks.js';
+import {createDailyRoutine,runDailyRoutines,connectDailyRoutineToWorld} from './daily-tasks.js';
 
 const json=(data,status=200,extra={})=>new Response(JSON.stringify(data),{
  status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...extra}
@@ -116,7 +116,7 @@ const mcpHandler={async fetch(request,env,ctx){
  if(!ctx.auth.scope.includes(isRead?READ:WRITE))return insufficientScope(ctx.auth,[READ,WRITE]);
  const args=body.params?.arguments;
  const normalized=args&&typeof args==='object'&&!Array.isArray(args)?args:{};
- const values=name==='google_daily_routine_create'?await createDailyRoutine(normalized,user,env):name.startsWith('google_')?await googleTool(name,normalized,user,env):await runTool(name,normalized,user,upstreamJwt,env);
+ const values=name==='link_world_connect_daily_routine'?await connectDailyRoutineToWorld(normalized,user,upstreamJwt,ctx.props.sessionId,env):name==='google_daily_routine_create'?await createDailyRoutine(normalized,user,env):name.startsWith('google_')?await googleTool(name,normalized,user,env):await runTool(name,normalized,user,upstreamJwt,env);
  return reply(body.id,{content:[{type:'text',text:JSON.stringify(values.data)}],isError:!values.ok});
 }};
 
@@ -146,4 +146,4 @@ const provider=new OAuthProvider({
  clientIdMetadataDocumentEnabled:true
 });
 
-export default {fetch(request,env,ctx){return provider.fetch(request,env,ctx)},scheduled(event,env,ctx){ctx.waitUntil(runDailyRoutines(env,new Date(event.scheduledTime)))}};
+export default {fetch(request,env,ctx){return provider.fetch(request,env,ctx)},scheduled(event,env,ctx){ctx.waitUntil((async()=>{try{const r=await runDailyRoutines(env,new Date(event.scheduledTime));await env.OAUTH_KV.put('linktask:daily:v1:last_run',JSON.stringify({...r,ranAt:new Date().toISOString()}),{expirationTtl:604800});}catch(e){await env.OAUTH_KV.put('linktask:daily:v1:last_run',JSON.stringify({errors:1,error:'daily_sync_failed',ranAt:new Date().toISOString()}),{expirationTtl:604800});}})())}};
