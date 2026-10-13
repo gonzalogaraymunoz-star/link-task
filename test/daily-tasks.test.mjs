@@ -21,7 +21,7 @@ function fixture(){
   url=String(url);
   if(url.endsWith('/token'))return new Response(JSON.stringify({access_token:'google-access'}),{status:200});
   if(url.includes('/users/@me/lists?'))return new Response(JSON.stringify({items:[{id:ids.list,title:'Caracol Marketing'}]}),{status:200});
-  if(url.includes('/lists/'+ids.list+'/tasks?'))return new Response(JSON.stringify({items:tasks}),{status:200});
+  if(url.includes('/lists/'+ids.list+'/tasks?')){const filterDate=new URL(url).searchParams.get('dueMin')?.slice(0,10);return new Response(JSON.stringify({items:tasks.filter(t=>!filterDate||t.due?.slice(0,10)===filterDate)}),{status:200});}
   if(url.endsWith('/lists/'+ids.list+'/tasks')&&opts.method==='POST'){
    const input=JSON.parse(opts.body), t={id:'task-'+(++next),...input};tasks.push(t);
    return new Response(JSON.stringify(t),{status:200});
