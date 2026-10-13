@@ -1,5 +1,7 @@
 // LINK TASK daily task routines: one source record, one Google Tasks item per local date.
 import {googleTool} from './google-tasks.js';
+import {resolveAuthSession} from './auth-session.js';
+import {resolveWorldTarget,linkRoutineToWorld,pushDailyTaskToWorld} from './link-world.js';
 
 const PREFIX='linktask:daily:v1:';
 const doneKey=(id,date)=>PREFIX+'done:'+id+':'+date;
@@ -79,12 +81,47 @@ export async function runDailyRoutines(env,clock=new Date()){
    seen++;
    try{
     const result=await materialize(record,env,clock);
-    if(!result.ok)errors++;
-    else if(result.already_created)skipped++;
+    if(!result.ok){errors++;continue}
+    if(result.already_created)skipped++;
     else created++;
+    if(record.linkWorld&&record.sessionId){
+     const session=await resolveAuthSession({userId:record.userId,sessionId:record.sessionId},env);
+     if(session.jwt){
+      const projected=await pushDailyTaskToWorld(record,{date:result.date,taskId:result.task_id},session.jwt,env);
+      if(!projected.ok)errors++;
+     }else errors++;
+    }
    }catch{errors++}
   }
   cursor=page.list_complete?null:page.cursor;
  }while(cursor);
  return {seen,created,skipped,errors};
+}
+
+export async function connectDailyRoutineToWorld(args,user,jwt,sessionId,env){
+ const id=textValue(args.routine_id,120);
+ if(!id||!/^[-\w]{3,120}$/.test(id))return {ok:false,data:{error:'valid_routine_id_required'}};
+ const saved=await env.OAUTH_KV.get(recordKey(id));
+ if(!saved)return {ok:false,data:{error:'routine_not_found'}};
+ let routine;
+ try{routine=JSON.parse(saved)}catch{return {ok:false,data:{error:'routine_record_corrupt'}}}
+ if(routine.userId!==user.id)return {ok:false,data:{error:'routine_not_owned_by_user'}};
+ const target=await resolveWorldTarget(args,jwt,env);
+ if(!target.ok)return {ok:false,data:{error:target.error}};
+ const linked=await linkRoutineToWorld(routine,target.target,jwt,env);
+ if(!linked.ok)return {ok:false,data:{error:linked.error,status:linked.status}};
+ routine.linkWorld=target.target;
+ routine.sessionId=sessionId;
+ await env.OAUTH_KV.put(recordKey(id),JSON.stringify(routine));
+ const today=await materialize(routine,env);
+ if(!today.ok)return {ok:false,data:{world_connected:true,google_task_error:today.data?.error||'task_not_created'}};
+ const synched=await pushDailyTaskToWorld(routine,{date:today.date,taskId:today.task_id},jwt,env);
+ return {ok:synched.ok,data:{
+  world_connected:true,routine_id:id,business_id:target.target.businessId,
+  project_id:target.target.projectId,global_id:target.target.globalId,
+  google_task_id:today.task_id,task_date:today.date,
+  google_task_already_created:today.already_created,
+  world_task_synced:synched.ok,
+  ...(synched.ok?{}:{error:synched.error})
+ }};
 }
