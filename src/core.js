@@ -14,6 +14,7 @@ export const TOOLS=[
 ];
 TOOLS.push(
 {name:'google_connect',description:'Generar enlace de autorización Google Tasks para el usuario autenticado. Abrir URL para conectar.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true}},
+{name:'google_tasklist_create',description:'Crear nueva lista de Google Tasks sólo cuando el usuario lo solicite expresamente.',inputSchema:{type:'object',properties:{title:{type:'string'}},required:['title'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}},
 {name:'google_tasklists',description:'Consultar listas de Google Tasks del usuario conectado.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true}},
 {name:'google_tasks_list',description:'Consultar tareas pendientes de una lista Google Tasks.',inputSchema:{type:'object',properties:{tasklist_id:{type:'string'}},required:['tasklist_id'],additionalProperties:false},annotations:{readOnlyHint:true}},
 {name:'google_task_create',description:'Crear una tarea en Google Tasks, solo con solicitud explícita del usuario.',inputSchema:{type:'object',properties:{tasklist_id:{type:'string'},title:{type:'string'},notes:{type:'string'},due:{type:'string',description:'Fecha YYYY-MM-DD'}},required:['tasklist_id','title'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}},
