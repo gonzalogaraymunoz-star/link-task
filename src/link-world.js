@@ -75,11 +75,11 @@ export async function linkRoutineToWorld(record,target,jwt,env){
  if(!event.ok)return {ok:false,error:'link_world_event_failed',status:event.status};
  return {ok:true,target};
 }
-export async function pushDailyTaskToWorld(record,{date,taskId,status='needsAction'},jwt,env){
+export async function pushDailyTaskToWorld(record,{date,taskId,status='needsAction',revision='initial'},jwt,env){
  const target=record?.linkWorld;
  if(!target?.globalId||!taskId||!date)return {ok:false,error:'binding_or_task_missing'};
  // An event is immutable. The same external task/state can be delivered repeatedly without duplication.
- const dedupeKey='linktask:google_tasks:'+record.userId+':'+taskId+':'+status;
+ const dedupeKey='linktask:google_tasks:'+record.userId+':'+taskId+':'+status+':'+encodeURIComponent(revision);
  const evt=await busEvent(record,target,{eventType:'GOOGLE_TASK_STATUS',dedupeKey,googleTaskId:taskId,date,status},jwt,env);
  return evt.ok?{ok:true,date,taskId,status}:{ok:false,error:'link_world_event_failed',status:evt.status};
 }
