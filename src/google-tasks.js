@@ -75,6 +75,10 @@ export async function googleTool(name,args,user,env){
    }
    return call('/lists/'+encodeURIComponent(args.tasklist_id)+'/tasks?'+q);
   }
+  if(name==='google_task_get'){
+   if(!args.tasklist_id||!args.task_id)return {ok:false,data:{error:'tasklist_id_and_task_id_required'}};
+   return call('/lists/'+encodeURIComponent(args.tasklist_id)+'/tasks/'+encodeURIComponent(args.task_id));
+  }
   if(name==='google_task_create'){
    if(typeof args.tasklist_id!=='string'||!args.tasklist_id.trim()||typeof args.title!=='string'||!args.title.trim())return {ok:false,data:{error:'tasklist_id_and_title_required'}};
    const task={title:args.title.trim().slice(0,500)};

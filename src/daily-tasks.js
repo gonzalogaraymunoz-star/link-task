@@ -81,17 +81,25 @@ export async function runDailyRoutines(env,clock=new Date()){
    seen++;
    try{
     const result=await materialize(record,env,clock);
+    await env.OAUTH_KV.put(PREFIX+'result:'+record.id,JSON.stringify({ranAt:new Date().toISOString(),ok:result.ok,error:result.ok?null:result.data?.error||'unknown',date:result.date||null,taskId:result.task_id||null}),{expirationTtl:604800});
     if(!result.ok){errors++;continue}
     if(result.already_created)skipped++;
     else created++;
     if(record.linkWorld&&record.sessionId){
      const session=await resolveAuthSession({userId:record.userId,sessionId:record.sessionId},env);
      if(session.jwt){
-      const projected=await pushDailyTaskToWorld(record,{date:result.date,taskId:result.task_id},session.jwt,env);
+      const task=await googleTool('google_task_get',{tasklist_id:record.listId,task_id:result.task_id},{id:record.userId},env);
+      if(!task.ok){errors++;continue}
+      const status=task.data.status==='completed'?'completed':task.data.status==='needsAction'?'needsAction':null;
+      if(!status){errors++;continue}
+      const projected=await pushDailyTaskToWorld(record,{date:result.date,taskId:result.task_id,status,revision:task.data.updated||'initial'},session.jwt,env);
       if(!projected.ok)errors++;
      }else errors++;
     }
-   }catch{errors++}
+   }catch{
+    errors++;
+    await env.OAUTH_KV.put(PREFIX+'result:'+record.id,JSON.stringify({ranAt:new Date().toISOString(),ok:false,error:'unexpected_daily_exception'}),{expirationTtl:604800});
+   }
   }
   cursor=page.list_complete?null:page.cursor;
  }while(cursor);

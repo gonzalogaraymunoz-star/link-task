@@ -146,4 +146,13 @@ const provider=new OAuthProvider({
  clientIdMetadataDocumentEnabled:true
 });
 
-export default {fetch(request,env,ctx){return provider.fetch(request,env,ctx)},scheduled(event,env,ctx){ctx.waitUntil((async()=>{try{const r=await runDailyRoutines(env,new Date(event.scheduledTime));await env.OAUTH_KV.put('linktask:daily:v1:last_run',JSON.stringify({...r,ranAt:new Date().toISOString()}),{expirationTtl:604800});}catch(e){await env.OAUTH_KV.put('linktask:daily:v1:last_run',JSON.stringify({errors:1,error:'daily_sync_failed',ranAt:new Date().toISOString()}),{expirationTtl:604800});}})())}};
+export default {fetch(request,env,ctx){return provider.fetch(request,env,ctx)},scheduled(event,env,ctx){ctx.waitUntil((async()=>{
+ const start=new Date().toISOString();
+ try{
+  await env.OAUTH_KV.put('linktask:daily:v1:last_started',JSON.stringify({startedAt:start,scheduledTime:event.scheduledTime,cron:event.cron}),{expirationTtl:604800});
+  const r=await runDailyRoutines(env,new Date(event.scheduledTime));
+  await env.OAUTH_KV.put('linktask:daily:v1:last_run',JSON.stringify({...r,startedAt:start,ranAt:new Date().toISOString()}),{expirationTtl:604800});
+ }catch(e){
+  await env.OAUTH_KV.put('linktask:daily:v1:last_run',JSON.stringify({errors:1,error:'daily_sync_failed',startedAt:start,ranAt:new Date().toISOString()}),{expirationTtl:604800});
+ }
+})())}};
