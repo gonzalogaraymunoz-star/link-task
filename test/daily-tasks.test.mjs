@@ -4,9 +4,9 @@ import {webcrypto} from 'node:crypto';
 import {createDailyRoutine,runDailyRoutines} from '../src/daily-tasks.js';
 if(!globalThis.crypto)globalThis.crypto=webcrypto;
 
-function fixture(){
+function fixture({emptyList=false}={}){
  const db=new Map(),ids={list:'caracol-list',user:'12345678-1234-4123-8123-123456789abc'};
- let tasks=[],next=0;
+ let tasks=[],next=0,listExists=!emptyList;
  const env={
   GOOGLE_CLIENT_ID:'test.apps.googleusercontent.com',GOOGLE_CLIENT_SECRET:'test-secret',
   GOOGLE_TOKEN_ENCRYPTION_KEY:Buffer.alloc(32,21).toString('base64'),
@@ -20,7 +20,13 @@ function fixture(){
  const fetchMock=async(url,opts={})=>{
   url=String(url);
   if(url.endsWith('/token'))return new Response(JSON.stringify({access_token:'google-access'}),{status:200});
-  if(url.includes('/users/@me/lists?'))return new Response(JSON.stringify({items:[{id:ids.list,title:'Caracol Marketing'}]}),{status:200});
+  
+  if(url.includes('/users/@me/lists?'))return new Response(JSON.stringify({items:listExists?[{id:ids.list,title:'Caracol Marketing'}]:[]}),{status:200});
+  if(url.endsWith('/users/@me/lists')&&opts.method==='POST'){
+   assert.equal(JSON.parse(opts.body).title,'Caracol Marketing');
+   listExists=true;
+   return new Response(JSON.stringify({id:ids.list,title:'Caracol Marketing'}),{status:200});
+  }
   if(url.includes('/lists/'+ids.list+'/tasks?')){const filterDate=new URL(url).searchParams.get('dueMin')?.slice(0,10);return new Response(JSON.stringify({items:tasks.filter(t=>!filterDate||t.due?.slice(0,10)===filterDate)}),{status:200});}
   if(url.endsWith('/lists/'+ids.list+'/tasks')&&opts.method==='POST'){
    const input=JSON.parse(opts.body), t={id:'task-'+(++next),...input};tasks.push(t);
@@ -69,4 +75,27 @@ test('daily routine creates only one task per local day, with a persistent routi
   assert.equal((await runDailyRoutines(f.env,tomorrow)).created,0);
   assert.equal(f.tasks.length,2);
  }finally{globalThis.fetch=original}
+});
+
+test('trusted queued daily routine creates the missing list and task without duplication',async()=>{
+ const f=fixture({emptyList:true}); await f.seed();
+ const key='linktask:daily:v1:record:caracol-reel-daily';
+ f.db.set(key,JSON.stringify({
+  id:'caracol-reel-daily',userId:f.ids.user,listId:null,listTitle:'Caracol Marketing',
+  title:'Publicar reel Caracol',project:'Caracol Marketing',timeZone:'America/Santiago',
+  notes:'Publicar un reel y guardar evidencia.',enabled:true,createdAt:'2026-10-13T13:00:00Z'
+ }));
+ const original=globalThis.fetch;globalThis.fetch=f.fetchMock;
+ try {
+  const once=await runDailyRoutines(f.env,new Date('2026-10-13T16:30:00Z'));
+  assert.equal(once.created,1);
+  assert.equal(once.errors,0);
+  const stored=JSON.parse(f.db.get(key));
+  assert.equal(stored.listId,f.ids.list);
+  assert.equal(f.tasks.length,1);
+  assert.equal(f.tasks[0].title,'Publicar reel Caracol');
+  const again=await runDailyRoutines(f.env,new Date('2026-10-13T16:35:00Z'));
+  assert.equal(again.created,0);
+  assert.equal(f.tasks.length,1);
+ } finally {globalThis.fetch=original}
 });
