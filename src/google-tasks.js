@@ -56,6 +56,15 @@ export async function googleTool(name,args,user,env){
    return {ok:response.ok,data:response.ok?data:{error:'google_api_error',status:response.status,details:data.error?.message||null}};
   };
   if(name==='google_tasklists')return call('/users/@me/lists?maxResults=100');
+  if(name==='google_tasklist_create'){
+   if(typeof args.title!=='string'||!args.title.trim())return {ok:false,data:{error:'title_required'}};
+   const title=args.title.trim().slice(0,100);
+   const lists=await call('/users/@me/lists?maxResults=100');
+   if(!lists.ok)return lists;
+   const existing=(lists.data.items||[]).find(l=>l.title.trim().toLocaleLowerCase('es')===title.toLocaleLowerCase('es'));
+   if(existing)return {ok:true,data:{...existing,already_existed:true}};
+   return call('/users/@me/lists',{method:'POST',body:JSON.stringify({title})});
+  }
   if(name==='google_tasks_list'){
    if(typeof args.tasklist_id!=='string'||!args.tasklist_id.trim())return {ok:false,data:{error:'tasklist_id_required'}};
    const q=new URLSearchParams({maxResults:'100',showCompleted:'false',showHidden:'false'});
