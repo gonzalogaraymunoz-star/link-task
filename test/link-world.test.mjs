@@ -30,7 +30,7 @@ test('connects only to actual accessible business/project using user JWT and RLS
  assert.equal(post.body.global_id,'LNK-BIZ-8940CF9AD521445D');
  assert.equal(post.body.payload.project_id,project);
  assert.equal(post.body.payload.calendar_action,'reuse_existing');
- assert.equal(post.body.dedupe_key,'linktask:google_tasks:11111111-1111-4111-8111-111111111111:google-task-id:needsAction');
+ assert.equal(post.body.dedupe_key,'linktask:google_tasks:11111111-1111-4111-8111-111111111111:google-task-id:needsAction:initial');
 });
 test('does not write when project is not visible to authenticated member',async()=>{
  let posts=0;globalThis.fetch=async url=>{
@@ -41,4 +41,22 @@ test('does not write when project is not visible to authenticated member',async(
  };
  const v=await resolveWorldTarget({business_slug:'caracol',project_slug:'marketing-caracol'},jwt,env);
  assert.equal(v.ok,false);assert.equal(v.error,'business_or_project_not_found');assert.equal(posts,0);
+});
+
+test('completed status emits a new event revision, not a duplicate pending status',async()=>{
+ const events=[];
+ globalThis.fetch=async(url,options={})=>{
+  if(!String(url).includes('event_bus?'))throw Error('unexpected route');
+  events.push(JSON.parse(options.body));
+  return new Response(null,{status:201});
+ };
+ const rec={id:'caracol-marketing-reel',userId:'11111111-1111-4111-8111-111111111111',title:'Publicar reel Caracol',timeZone:'America/Santiago',listId:'goog-list',linkWorld:{
+  businessId:biz,globalId:'LNK-BIZ-8940CF9AD521445D',projectId:project,projectName:'Marketing Caracol',projectSlug:'marketing-caracol'
+ }};
+ await pushDailyTaskToWorld(rec,{date:'2026-10-13',taskId:'gt1',status:'needsAction',revision:'2026-10-13T12:00:00Z'},jwt,env);
+ await pushDailyTaskToWorld(rec,{date:'2026-10-13',taskId:'gt1',status:'completed',revision:'2026-10-13T18:00:00Z'},jwt,env);
+ assert.equal(events.length,2);
+ assert.notEqual(events[0].dedupe_key,events[1].dedupe_key);
+ assert.equal(events[1].payload.google_tasks_status,'completed');
+ assert.equal(events[1].payload.evidence_state,'pending');
 });
