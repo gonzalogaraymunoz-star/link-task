@@ -92,7 +92,7 @@ async function handleAuthorize(request,env){
 
 const mcpHandler={async fetch(request,env,ctx){
  const session=await resolveAuthSession(ctx.props,env);
- if(session.error)return json({error:session.error},session.error==='auth_refresh_temporarily_unavailable'||session.error==='auth_session_unavailable'?503:401);
+ if(session.error)return json({error:session.error},['auth_refresh_temporarily_unavailable','auth_session_unavailable','auth_identity_temporarily_unavailable'].includes(session.error)?503:401);
  const {user,jwt:upstreamJwt}=session;
  if(request.method!=='POST')return json({error:'method_not_allowed'},405,{allow:'POST'});
  if(Number(request.headers.get('content-length')||0)>16000)return json({error:'payload_too_large'},413);
