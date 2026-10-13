@@ -14,5 +14,10 @@
   ],
   "vars": {
     "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_RE_eqhBaLeaUMHuBjLUY2Q_OZNBm9_A"
+  },
+  "triggers": {
+    "crons": [
+      "0 12 * * *"
+    ]
   }
 }
