@@ -3,6 +3,7 @@ import {OAuthProvider, AuthorizationError, insufficientScope} from '@cloudflare/
 import {APP,SUPA,HOST,RESOURCE,READ,WRITE,TOOLS,getUser,runTool} from './core.js';
 import {consentScript} from './consent.js';
 import {googleTool,googleCallback} from './google-tasks.js';
+import {createAuthSession,resolveAuthSession} from './auth-session.js';
 
 const json=(data,status=200,extra={})=>new Response(JSON.stringify(data),{
  status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...extra}
@@ -74,25 +75,25 @@ async function handleAuthorize(request,env){
   const requested=Array.isArray(body.scope)?body.scope.filter(s=>typeof s==='string'):[];
   const selected=requested.filter(s=>[READ,WRITE,'offline_access'].includes(s));
   if(!selected.includes(READ))return json({error:'read_scope_required'},400);
+  if(typeof body.refreshToken!=='string'||!body.refreshToken)return json({error:'session_refresh_token_required'},400);
   const approved=await oauth.approveConsent(request,body.handle,{scope:selected});
-  const completed=await oauth.completeAuthorization({
+  const sessionId=await createAuthSession({userId:user.id,accessToken:upstreamJwt,refreshToken:body.refreshToken,expiresIn:body.expiresIn},env);
+  let completed;
+  try{completed=await oauth.completeAuthorization({
    request:approved.request,
    userId:user.id,metadata:{origin:'LINK TASK'},
    scope:selected,
-   props:{userId:user.id,upstreamJwt}
-  });
+   props:{userId:user.id,sessionId}
+  });}catch(error){await env.OAUTH_KV.delete('link_task:supa_session:'+sessionId);throw error;}
   return redirectJson(approved.headers,completed.redirectTo);
  }
  return json({error:'method_not_allowed'},405);
 }
 
 const mcpHandler={async fetch(request,env,ctx){
- const userId=ctx.props?.userId,upstreamJwt=ctx.props?.upstreamJwt;
- const user=await getUser(upstreamJwt,env);
- if(!user||user.id!==userId){
-  // First release: after upstream JWT expiration a fresh OAuth login is needed.
-  return json({error:'supabase_session_expired_reconnect'},401);
- }
+ const session=await resolveAuthSession(ctx.props,env);
+ if(session.error)return json({error:session.error},session.error==='auth_refresh_temporarily_unavailable'||session.error==='auth_session_unavailable'?503:401);
+ const {user,jwt:upstreamJwt}=session;
  if(request.method!=='POST')return json({error:'method_not_allowed'},405,{allow:'POST'});
  if(Number(request.headers.get('content-length')||0)>16000)return json({error:'payload_too_large'},413);
  const body=await request.json().catch(()=>null);
