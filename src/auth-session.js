@@ -1,6 +1,6 @@
 // Short-lived Supabase JWTs must never be baked into long-lived OAuth grants.
 // Store independently encrypted, per-grant refresh credentials in Cloudflare KV.
-import {SUPA,getUser} from './core.js';
+import {SUPA} from './core.js';
 
 const te=new TextEncoder(), td=new TextDecoder();
 const THIRTY_DAYS_MS=30*24*60*60*1000;
@@ -97,7 +97,12 @@ export async function resolveAuthSession(props,env){
      saved=result.session;
    }catch{return {error:'auth_refresh_temporarily_unavailable'}}
  }
- const user=await getUser(saved.accessToken,env);
- if(!user||user.id!==userId)return {error:'auth_reconnect_required'};
- return {user,jwt:saved.accessToken};
+ let check;
+ try{check=await fetch(SUPA+'/auth/v1/user',{headers:{apikey:env.SUPABASE_PUBLISHABLE_KEY,authorization:'Bearer '+saved.accessToken}})}
+ catch{return {error:'auth_identity_temporarily_unavailable'}}
+ if(check.status>=500)return {error:'auth_identity_temporarily_unavailable'};
+ if(!check.ok)return {error:'auth_reconnect_required'};
+ const profile=await check.json().catch(()=>null);
+ if(!profile||profile.id!==userId)return {error:'auth_reconnect_required'};
+ return {user:{id:userId,email:profile.email||null},jwt:saved.accessToken};
 }
