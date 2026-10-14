@@ -75,7 +75,7 @@ async function handleAuthorize(request,env){
   if(!user)return json({error:'supabase_session_invalid'},401);
   const requested=Array.isArray(body.scope)?body.scope.filter(s=>typeof s==='string'):[];
   const selected=requested.filter(s=>[READ,WRITE,'offline_access'].includes(s));
-  if(!selected.includes(READ)||!selected.includes(WRITE))return json({error:'read_and_write_scopes_required'},400);
+  if(!selected.includes(READ))return json({error:'read_scope_required'},400);
   if(typeof body.refreshToken!=='string'||!body.refreshToken)return json({error:'session_refresh_token_required'},400);
   const approved=await oauth.approveConsent(request,body.handle,{scope:selected});
   const sessionId=await createAuthSession({userId:user.id,accessToken:upstreamJwt,refreshToken:body.refreshToken,expiresIn:body.expiresIn},env);
@@ -141,7 +141,7 @@ const provider=new OAuthProvider({
  apiRoute:'/mcp',apiHandler:mcpHandler,defaultHandler,
  authorizeEndpoint:'/authorize',tokenEndpoint:'/oauth/token',
  clientRegistrationEndpoint:'/oauth/register',
- scopesSupported:[READ,WRITE,'offline_access'],requiredScopes:[READ,WRITE],
+ scopesSupported:[READ,WRITE,'offline_access'],requiredScopes:[READ],
  resourceMetadata:{resource:RESOURCE,resource_name:'LINK TASK',authorization_servers:[HOST]},
  clientIdMetadataDocumentEnabled:true
 });
