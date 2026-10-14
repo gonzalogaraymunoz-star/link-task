@@ -3,18 +3,24 @@ import {EXPERIENCE_CSS} from './experience-style.js';
 import {EXPERIENCE_JS} from './experience-motion.js';
 import {BRAND_CSS} from './link-brand.css.js';
 import {BRAND_SCRIPT} from './link-brand.js';
+import {RESPONSIVE_CSS} from './responsive.css.js';
+import {MOBILE_SCRIPT} from './mobile.js';
 
 const PREFIX='/_experience';
-const RELEASE='2026-10-14-link-digital-v1';
+const RELEASE='2026-10-14-responsive-v1';
 
 export function enhanceHtml(html){
  if(!html.includes('</head>')||!html.includes('</body>'))return html;
  const styles='<link rel="stylesheet" href="'+PREFIX+'.css?v='+RELEASE+'">';
  const motion='<script src="'+PREFIX+'.js?v='+RELEASE+'" defer></script>';
  const brandingScript='<script src="/_link-brand.js?v='+RELEASE+'" defer></script>';
+ const responsiveScript='<script src="/_mobile.js?v='+RELEASE+'" defer></script>';
  const earlyMode='<script>try{const stored=localStorage.getItem("linktask_brand_v1")==="1"?localStorage.getItem("linktask_visual_mode"):"day";document.documentElement.dataset.visual=stored==="night"?"night":"day";}catch(e){document.documentElement.dataset.visual="day"}</script>';
  const brandStyles='<link rel="stylesheet" href="/_link-brand.css?v='+RELEASE+'">';
- return html.replace('</head>',earlyMode+styles+brandStyles+'</head>').replace('</body>',motion+brandingScript+'</body>');
+ const responsiveStyles='<link rel="stylesheet" href="/_responsive.css?v='+RELEASE+'">';
+ return html.replace('content="width=device-width,initial-scale=1"','content="width=device-width,initial-scale=1,viewport-fit=cover"')
+  .replace('</head>',earlyMode+styles+brandStyles+responsiveStyles+'</head>')
+  .replace('</body>',motion+brandingScript+responsiveScript+'</body>');
 }
 
 export default {
@@ -28,6 +34,12 @@ export default {
   }
   if(request.method==='GET'&&url.pathname==='/_link-brand.js'){
    return new Response(BRAND_SCRIPT,{headers:{'content-type':'text/javascript; charset=utf-8','cache-control':'public, max-age=600','x-content-type-options':'nosniff'}});
+  }
+  if(request.method==='GET'&&url.pathname==='/_responsive.css'){
+   return new Response(RESPONSIVE_CSS,{headers:{'content-type':'text/css; charset=utf-8','cache-control':'public, max-age=600','x-content-type-options':'nosniff'}});
+  }
+  if(request.method==='GET'&&url.pathname==='/_mobile.js'){
+   return new Response(MOBILE_SCRIPT,{headers:{'content-type':'text/javascript; charset=utf-8','cache-control':'public, max-age=600','x-content-type-options':'nosniff'}});
   }
   if(request.method==='GET'&&url.pathname===PREFIX+'.js'){
    return new Response(EXPERIENCE_JS,{headers:{'content-type':'text/javascript; charset=utf-8','cache-control':'public, max-age=600','x-content-type-options':'nosniff'}});
