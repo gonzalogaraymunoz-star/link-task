@@ -50,3 +50,40 @@ test('la versión pública incluye identidad LINK DIGITAL, sin reemplazar formul
  assert.match(html,/id="entryForm"/);
  assert.match(html,/id="sessionForm"/);
 });
+
+test('responsive: meta viewport y recursos táctiles están enlazados',async()=>{
+ const response=await worker.fetch(new Request('https://link-task.example.test/'));
+ const html=await response.text();
+ assert.match(html,/viewport-fit=cover/);
+ assert.match(html,/_responsive\\.css/);
+ assert.match(html,/_mobile\\.js/);
+ assert.match(html,/id="entryForm"/);
+ assert.match(html,/id="sessionForm"/);
+});
+test('responsive: tamaños 320, 480, 850, 1160 y pantalla panorámica documentados',async()=>{
+ const r=await worker.fetch(new Request('https://link-task.example.test/_responsive.css'));
+ assert.equal(r.status,200);
+ const css=await r.text();
+ for(const breakpoint of ['max-width:355px','max-width:480px','max-width:620px','max-width:850px','max-width:1160px','min-width:1600px']){
+  assert.ok(css.includes(breakpoint),'Missing breakpoint '+breakpoint);
+ }
+ assert.match(css,/mobileNavBackdrop/);
+ assert.match(css,/viewport/);
+ assert.match(css,/100dvh/);
+ assert.match(css,/env\\(safe-area-inset-bottom\\)/);
+ assert.match(css,/font-size:16px/);
+ assert.match(css,/max-width:100%/);
+});
+test('responsive: navegación accesible y controles móviles mantienen foco y cierre',async()=>{
+ const r=await worker.fetch(new Request('https://link-task.example.test/_mobile.js'));
+ assert.equal(r.status,200);
+ const code=await r.text();
+ assert.doesNotThrow(()=>new Function(code));
+ assert.match(code,/aria-expanded/);
+ assert.match(code,/aria-hidden/);
+ assert.match(code,/inert/);
+ assert.match(code,/mobileNavOpen/);
+ assert.match(code,/touchend/);
+ assert.match(code,/Escape/);
+ assert.match(code,/newEntry/);
+});
