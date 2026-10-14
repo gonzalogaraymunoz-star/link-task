@@ -1,10 +1,10 @@
 {
   "name": "link-task-app",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check src/index.js && node --check src/legacy.js && node --check src/experience-style.js && node --check src/experience-motion.js && node --test test/*.test.mjs",
+    "check": "node --check src/index.js && node --check src/legacy.js && node --check src/experience-style.js && node --check src/experience-motion.js && node --check src/link-brand.css.js && node --check src/link-brand.js && node --check src/responsive.css.js && node --check src/mobile.js && node --test test/*.test.mjs",
     "deploy": "wrangler deploy",
     "smoke": "node test/smoke.mjs"
   },
