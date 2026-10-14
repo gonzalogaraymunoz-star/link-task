@@ -141,7 +141,7 @@ const provider=new OAuthProvider({
  apiRoute:'/mcp',apiHandler:mcpHandler,defaultHandler,
  authorizeEndpoint:'/authorize',tokenEndpoint:'/oauth/token',
  clientRegistrationEndpoint:'/oauth/register',
- scopesSupported:[READ,WRITE,'offline_access'],requiredScopes:[READ],
+ scopesSupported:[READ,WRITE,'offline_access'],requiredScopes:[READ,WRITE],
  resourceMetadata:{resource:RESOURCE,resource_name:'LINK TASK',authorization_servers:[HOST]},
  clientIdMetadataDocumentEnabled:true
 });
