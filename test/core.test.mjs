@@ -7,9 +7,9 @@ const user={id:'11111111-1111-4111-8111-111111111111',email:'test@example.org'};
 let original;
 test.beforeEach(()=>{original=globalThis.fetch});
 test.afterEach(()=>{globalThis.fetch=original});
-test('define catorce herramientas MCP',()=>{
- assert.deepEqual(TOOLS.map(t=>t.name),['get_workspace','list_sessions','get_insights','start_session','end_session','record_work','link_world_connect_daily_routine','google_connect','google_daily_routine_create','google_tasklist_create','google_tasklists','google_tasks_list','google_task_create','google_disconnect']);
- assert.equal(TOOLS.filter(t=>t.annotations.readOnlyHint).length,6);
+test('define quince herramientas MCP',()=>{
+ assert.deepEqual(TOOLS.map(t=>t.name),['get_workspace','list_sessions','list_businesses','get_insights','start_session','end_session','record_work','link_world_connect_daily_routine','google_connect','google_daily_routine_create','google_tasklist_create','google_tasklists','google_tasks_list','google_task_create','google_disconnect']);
+ assert.equal(TOOLS.filter(t=>t.annotations.readOnlyHint).length,7);
 });
 test('no se acepta identidad si falta JWT',async()=>{
  assert.equal(await getUser('',env),null);
@@ -30,13 +30,15 @@ test('rechazar ID inválido de sesión',async()=>{
 test('registro puntual no mide duración',async()=>{
  let payload;
  globalThis.fetch=async(url,options)=>{
+  if(url.includes('/link_world_businesses'))return {ok:true,status:200,json:async()=>[{id:'22222222-2222-4222-8222-222222222222',slug:'lama-travelers',name:'LAMA Travelers'}]};
   assert.ok(url.includes('/link_task_sessions'));
   payload=JSON.parse(options.body);
   return {ok:true,status:201,json:async()=>[{id:'saved-id',title:payload.title}]};
  };
- const r=await runTool('record_work',{title:'Diseñar puente MCP',result:'Evidencia creada'},user,'jwt',env);
+ const r=await runTool('record_work',{title:'Diseñar puente MCP',result:'Evidencia creada',business_slug:'lama-travelers'},user,'jwt',env);
  assert.equal(r.ok,true);
  assert.equal(payload.context.duration_kind,'not_measured');
+ assert.equal(payload.context.business_slug,'lama-travelers');
  assert.equal(payload.user_id,user.id);
  assert.equal(payload.started_at,payload.ended_at);
 });
