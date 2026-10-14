@@ -1,0 +1,40 @@
+export const KANBAN_SCRIPT = String.raw`
+(()=>{
+ if(window.__linkKanban)return;window.__linkKanban=true;
+ const init=()=>{
+  const dashboard=document.getElementById('dashboard'),feed=document.getElementById('feed'),sidebar=document.getElementById('sidebar');
+  if(!dashboard||!feed||!sidebar)return;
+  const nav=document.createElement('button');nav.className='nav';nav.type='button';nav.innerHTML='<span class="icon">▦</span>Kanban';nav.setAttribute('aria-label','Abrir tablero Kanban');
+  const anchor=sidebar.querySelector('[data-nav="task"]');anchor.after(nav);
+  const host=document.createElement('section');host.id='linkKanban';host.hidden=true;host.style.cssText='padding:16px 0';
+  const workspace=document.querySelector('.workspace');workspace.parentNode.insertBefore(host,workspace);
+  const style=document.createElement('style');style.textContent='#linkKanban[hidden]{display:none!important}.lkfilters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}.lkfilters select{min-height:44px;min-width:135px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:9px}.lkgrid{display:grid;grid-template-columns:repeat(4,minmax(190px,1fr));gap:12px;overflow-x:auto}.lkcolumn{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;min-height:180px}.lkcolumn h3{font-size:13px;margin-bottom:12px}.lkcard{display:block;width:100%;text-align:left;border:1px solid var(--border);border-radius:12px;background:var(--bg);padding:12px;margin-bottom:9px;color:var(--text);white-space:normal}.lkcard strong{display:block;font-size:13px;margin:6px 0}.lkcard small{color:var(--muted)}.lkdetail{margin-top:16px;border:1px solid var(--border);border-radius:14px;padding:16px;background:var(--card)}.lkdetail h3{font-size:18px}.lkdetail p{margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}.lkdetail select{min-height:44px;padding:9px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:9px}.lkdetail button{min-height:44px;margin:8px 8px 0 0}.lkdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:#888}.lkdot.caracol{background:#b58a5a}.lkdot.lama{background:#69a68d}.lkdot.world{background:#a7bc66}@media(max-width:850px){.lkgrid{grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}}@media(max-width:500px){.lkgrid{grid-template-columns:minmax(0,1fr)}.lkcolumn{min-height:60px}}';document.head.append(style);
+  const filter=document.createElement('div');filter.className='lkfilters';
+  const biz=document.createElement('select');biz.setAttribute('aria-label','Filtrar negocio');
+  const period=document.createElement('select');period.setAttribute('aria-label','Filtrar período');
+  for(const [v,l] of [['day','Día'],['week','Semana'],['month','Mes'],['year','Año'],['all','Todo el historial']])period.add(new Option(l,v));
+  const grid=document.createElement('div');grid.className='lkgrid';
+  const details=document.createElement('section');details.className='lkdetail';details.hidden=true;
+  filter.append(biz,period);host.append(filter,grid,details);
+  let active=false,selected=null;
+  function records(){return [...(model.entries||[]).filter(x=>x.kind==='task').map(x=>({...x,recordType:'task',date:x.created_at})),...(model.sessions||[]).map(x=>({...x,recordType:'session',business:x.context?.business||x.category||'LINK WORLD',date:x.started_at,status:x.ended_at?'done':'in_progress',summary:x.result||'Sesión de trabajo registrada.'}))]}
+  function currentDate(){return new Date()}
+  function inPeriod(s){if(period.value==='all')return true;const d=new Date(s.date),now=currentDate();if(!Number.isFinite(d.getTime()))return false;const parts=t=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Santiago',year:'numeric',month:'2-digit',day:'2-digit'}).format(t);const key=parts(d),today=parts(now);if(period.value==='day')return key===today;if(period.value==='month')return key.slice(0,7)===today.slice(0,7);if(period.value==='year')return key.slice(0,4)===today.slice(0,4);const utc=t=>{const [y,m,day]=parts(t).split('-').map(Number);return Date.UTC(y,m-1,day)};return Math.abs(utc(d)-utc(now))<=6*86400000}
+  function options(){const value=biz.value;biz.replaceChildren(new Option('Todos los negocios','all'));const names=[...new Set(records().map(x=>x.business||'LINK WORLD'))].sort();names.forEach(x=>biz.add(new Option(x,x)));biz.value=names.includes(value)?value:'all'}
+  function stage(x){return x.status==='done'?'Completado':x.status==='in_progress'?'En curso':x.status==='archived'?'En revisión':'Pendiente'}
+  function show(x){selected=x.id;details.hidden=false;details.replaceChildren();const title=document.createElement('h3');title.textContent=x.title;const desc=document.createElement('p');desc.textContent=x.summary||'Sin descripción';const meta=document.createElement('p');meta.textContent=(x.business||'LINK WORLD')+' · '+new Date(x.date).toLocaleString('es-CL',{timeZone:'America/Santiago'});details.append(title,desc,meta);
+    if(x.recordType==='task'){const label=document.createElement('label');label.textContent='Estado: ';const select=document.createElement('select');[['open','Pendiente'],['in_progress','En curso'],['done','Completado'],['archived','En revisión / archivado']].forEach(([v,l])=>select.add(new Option(l,v)));select.value=x.status;select.addEventListener('change',async()=>{select.disabled=true;try{await api('/api/entries/'+encodeURIComponent(x.id),'PATCH',{status:select.value});await load();paint()}catch(e){alertUser(e.message)}finally{select.disabled=false}});label.append(select);details.append(label)}
+    if(x.reference_url&&/^https:\/\//.test(x.reference_url)){const a=document.createElement('a');a.href=x.reference_url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Abrir evidencia ↗';details.append(a)}
+    const close=document.createElement('button');close.className='btn';close.textContent='Cerrar ficha';close.addEventListener('click',()=>{details.hidden=true;selected=null});details.append(close);details.scrollIntoView({block:'nearest'});
+  }
+  function paint(){if(!active)return;options();const all=records().filter(x=>(biz.value==='all'||(x.business||'LINK WORLD')===biz.value)&&inPeriod(x));grid.replaceChildren();for(const st of ['Pendiente','En curso','En revisión','Completado']){const col=document.createElement('section');col.className='lkcolumn';const group=all.filter(x=>stage(x)===st);const h=document.createElement('h3');h.textContent=st+' · '+group.length;col.append(h);for(const x of group){const b=document.createElement('button');b.type='button';b.className='lkcard';const badge=document.createElement('small');badge.textContent=x.business||'LINK WORLD';const t=document.createElement('strong');t.textContent=x.title;const d=document.createElement('small');d.textContent=new Date(x.date).toLocaleDateString('es-CL',{timeZone:'America/Santiago'});b.append(badge,t,d);b.addEventListener('click',()=>show(x));col.append(b)}grid.append(col)}if(selected){const found=all.find(x=>x.id===selected);if(found)show(found);else{selected=null;details.hidden=true}}}
+  function toggle(on){active=on;host.hidden=!on;workspace.hidden=on;workspace.style.display=on?'none':'';nav.classList.toggle('active',on);if(on){model.kind='all';model.business='';paint()}}
+  nav.addEventListener('click',()=>toggle(true));
+  sidebar.addEventListener('click',e=>{if(e.target.closest('[data-nav],[data-business]'))toggle(false)},true);
+  biz.addEventListener('change',paint);period.addEventListener('change',paint);
+  const originalLoad=window.__kanbanLoadMarker;const observer=new MutationObserver(()=>{if(active)paint()});observer.observe(document.getElementById('listCount'),{childList:true,subtree:true});
+  const originalRender=render;render=function(){originalRender();if(active)paint()};
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+`;
