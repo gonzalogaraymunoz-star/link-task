@@ -16,6 +16,8 @@ const securityHeaders={
  'content-security-policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self' "+SUPA+"; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
 };
 
+function securityHeadersWithHtml(){return {...securityHeaders,'content-type':'text/html; charset=utf-8'};}
+
 function consentPage(details,handle,env){
  const scopes=details.scope.map(scope=>
   '<label><input type="checkbox" name="scope" value="'+escapeHtml(scope)+'" checked> '+escapeHtml(scope)+'</label>'
@@ -53,6 +55,11 @@ async function handleAuthorize(request,env){
  if(request.method==='GET'){
   const parsed=await oauth.parseAuthRequest(request);
   const details=await oauth.describeConsent(parsed);
+  // OAuth clients must explicitly request write; never silently elevate read-only grants.
+  // Stop the credential prompt instead of sending users into a repeated read-only login.
+  if(!details.scope.includes(WRITE)){
+   return new Response('<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LINK TASK · Permisos incompletos</title><body style="font:16px system-ui;max-width:540px;margin:12vh auto;padding:24px;color:#20382c"><h1>Conexión incompleta</h1><p>ChatGPT solicitó solo lectura (<code>link_task:read</code>). Para registrar actividades, la conexión debe solicitar también <code>link_task:write</code>.</p><p><strong>No introduzcas tu contraseña ni repitas la autorización.</strong> Esta solicitud debe corregirse desde la configuración del cliente ChatGPT.</p><p>Puedes cerrar esta ventana y volver a ChatGPT.</p></body></html>',{status:400,headers:securityHeadersWithHtml()});
+  }
   const consent=await oauth.beginConsent(parsed);
   const headers=new Headers(consent.headers);
   Object.entries(securityHeaders).forEach(([k,v])=>headers.set(k,v));
