@@ -14,6 +14,7 @@ assert.equal(protectedResource.status,200,'MCP resource metadata must be availab
 const info=await protectedResource.json();
 assert.equal(info.resource,host+'/mcp');
 assert.equal(info.authorization_servers.includes(host),true);
+assert.deepEqual([...info.scopes_supported].sort(),['link_task:read','link_task:write'],'MCP must request read and write together on first connection');
 const unauth=await fetch(host+'/mcp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize'})});
 assert.equal(unauth.status,401,'MCP must reject unauthenticated clients');
 assert.match(unauth.headers.get('www-authenticate')||'',/resource_metadata|Bearer/i);
