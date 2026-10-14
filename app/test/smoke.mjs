@@ -21,8 +21,13 @@ await untilReady('/_experience.css',body=>body.includes('.pulsePanel')&&body.inc
 await untilReady('/_experience.js',body=>body.includes('pulseMetricNumber')&&body.includes('sidebarCompact'));
 await untilReady('/_link-brand.css',body=>body.includes('#F8F8F5')&&body.includes('#D9FA87'));
 await untilReady('/_link-brand.js',body=>body.includes('M329 230 L319 230')&&body.includes('wordDivider'));
+await untilReady('/_responsive.css',body=>body.includes('max-width:480px')&&body.includes('mobileNavBackdrop'));
+await untilReady('/_mobile.js',body=>body.includes('mobileNavOpen')&&body.includes('aria-expanded'));
 await untilReady('/api/health',body=>{try{return JSON.parse(body).service==='link-task'}catch{return false}});
 assert.ok(html.includes('id="feed"'));
 assert.ok(html.includes('/_link-brand.css'));
 assert.ok(html.includes('/_link-brand.js'));
-console.log('LINK TASK app smoke OK: official LINK DIGITAL brand, assets, panel + API');
+assert.ok(html.includes('/_responsive.css'));
+assert.ok(html.includes('/_mobile.js'));
+assert.ok(html.includes('viewport-fit=cover'));
+console.log('LINK TASK app smoke OK: responsive mobile/tablet/desktop assets, official brand, panel + API');
