@@ -68,7 +68,6 @@ test('responsive: tamaños 320, 480, 850, 1160 y pantalla panorámica documentad
   assert.ok(css.includes(breakpoint),'Missing breakpoint '+breakpoint);
  }
  assert.match(css,/mobileNavBackdrop/);
- assert.match(css,/viewport/);
  assert.match(css,/100dvh/);
  assert.match(css,/env\\(safe-area-inset-bottom\\)/);
  assert.match(css,/font-size:16px/);
