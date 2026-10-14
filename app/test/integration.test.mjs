@@ -55,8 +55,8 @@ test('responsive: meta viewport y recursos táctiles están enlazados',async()=>
  const response=await worker.fetch(new Request('https://link-task.example.test/'));
  const html=await response.text();
  assert.match(html,/viewport-fit=cover/);
- assert.match(html,/_responsive\\.css/);
- assert.match(html,/_mobile\\.js/);
+ assert.ok(html.includes('_responsive.css'));
+ assert.ok(html.includes('_mobile.js'));
  assert.match(html,/id="entryForm"/);
  assert.match(html,/id="sessionForm"/);
 });
@@ -69,7 +69,7 @@ test('responsive: tamaños 320, 480, 850, 1160 y pantalla panorámica documentad
  }
  assert.match(css,/mobileNavBackdrop/);
  assert.match(css,/100dvh/);
- assert.match(css,/env\\(safe-area-inset-bottom\\)/);
+ assert.ok(css.includes('env(safe-area-inset-bottom)'));
  assert.match(css,/font-size:16px/);
  assert.match(css,/max-width:100%/);
 });
