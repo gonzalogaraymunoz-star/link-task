@@ -19,6 +19,10 @@ async function untilReady(path,verify){
 const html=await untilReady('/',body=>body.includes('id="dashboard"')&&body.includes('/_experience.css')&&body.includes('/_experience.js'));
 await untilReady('/_experience.css',body=>body.includes('.pulsePanel')&&body.includes('data-visual'));
 await untilReady('/_experience.js',body=>body.includes('pulseMetricNumber')&&body.includes('sidebarCompact'));
+await untilReady('/_link-brand.css',body=>body.includes('#F8F8F5')&&body.includes('#D9FA87'));
+await untilReady('/_link-brand.js',body=>body.includes('M329 230 L319 230')&&body.includes('wordDivider'));
 await untilReady('/api/health',body=>{try{return JSON.parse(body).service==='link-task'}catch{return false}});
 assert.ok(html.includes('id="feed"'));
-console.log('LINK TASK app smoke OK: app, CSS, JS, existing panel + API');
+assert.ok(html.includes('/_link-brand.css'));
+assert.ok(html.includes('/_link-brand.js'));
+console.log('LINK TASK app smoke OK: official LINK DIGITAL brand, assets, panel + API');
