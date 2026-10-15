@@ -19,9 +19,11 @@ Puente remoto MCP para **ChatGPT ↔ LINK TASK ↔ Supabase**, desplegado desde 
 4. Las herramientas consultan la API de LINK TASK o escriben en Supabase con **el JWT de ese usuario**; RLS protege los datos.
 5. LINK TASK refleja las sesiones al actualizar el panel.
 
-Herramientas: `get_workspace`, `list_sessions`, `get_insights`, `start_session`, `end_session`, `record_work`.
+Herramientas principales: `get_workspace`, `list_sessions`, `get_insights`, `start_session`, `end_session`, `update_closed_session`, `record_work`.
 
 **Privacidad:** el MCP no recibe automáticamente el historial privado ni la memoria de ChatGPT. Registra únicamente información enviada por operaciones autorizadas. `record_work` guarda eventos puntuales con `duration_kind=not_measured`; no inventa duración.
+
+`update_closed_session` permite corregir una sesión cerrada solo por solicitud explícita. Filtra por el usuario autenticado, exige que la sesión ya esté cerrada, valida el orden de las fechas, recalcula la duración cuando cambian los tiempos y conserva un historial breve de auditoría dentro del contexto. `end_session` acepta el modo compatible `edit_closed=true` para clientes que todavía no hayan actualizado su catálogo de herramientas.
 
 ## Desarrollo
 
