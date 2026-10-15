@@ -20,7 +20,19 @@ export const MOBILE_SCRIPT = "\n(function(){\n 'use strict';\n const mobile=wind
    const header=document.querySelector('.top');
    const offset=(header?.getBoundingClientRect().height||0)+16;
    const y=window.scrollY+target.getBoundingClientRect().top-offset;
-   window.scrollTo({top:Math.max(0,y),behavior:reduce?'instant':'smooth'});
+   const position=Math.max(0,y);
+   // Some layouts scroll .main rather than window; move the actual scroll owner.
+   const owners=[document.scrollingElement,document.documentElement,document.body,document.querySelector('.main'),document.querySelector('.content')].filter(Boolean);
+   for(const owner of owners){
+     if(owner.scrollHeight>owner.clientHeight+10){
+       const rect=target.getBoundingClientRect();
+       const base=owner===document.scrollingElement||owner===document.documentElement||owner===document.body?position:owner.scrollTop+rect.top-owner.getBoundingClientRect().top-offset;
+       owner.scrollTo({top:Math.max(0,base),behavior:'instant'});
+     }
+   }
+   target.scrollIntoView({block:'start',behavior:'instant'});
+   // Sticky toolbar offset is handled through scroll-margin on section targets.
+
  };
  sidebar.addEventListener('click',event=>{
    const nav=event.target.closest('[data-nav],[data-business]');
