@@ -9,7 +9,7 @@ import {MOBILE_SCRIPT} from './mobile.js';
 
 const PREFIX='/_experience';
 const KANBAN_PATH='/_kanban.js';
-const RELEASE='2026-10-14-kanban-home-v2';
+const RELEASE='2026-10-14-sidebar-nav-v3';
 
 export function enhanceHtml(html){
  if(!html.includes('</head>')||!html.includes('</body>'))return html;
