@@ -11,7 +11,8 @@ export const TOOLS=[
 {name:'list_businesses',description:'Listar negocios oficiales del directorio LINK WORLD para asociar registros.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true}},
 {name:'get_insights',description:'Leer estadísticas de sesiones reales, sin inventar tiempos.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true}},
 {name:'start_session',description:'Iniciar sesión medible solamente con autorización del usuario.',inputSchema:{type:'object',properties:{title:{type:'string'},category:{type:'string'},client_event_id:{type:'string'}},required:['title'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}},
-{name:'end_session',description:'Cerrar una sesión activa y guardar resultado.',inputSchema:{type:'object',properties:{id:{type:'string'},result:{type:'string'}},required:['id'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}},
+{name:'end_session',description:'Cerrar una sesión activa y guardar resultado. Con edit_closed=true también permite corregir una sesión ya cerrada por solicitud explícita.',inputSchema:{type:'object',properties:{id:{type:'string'},result:{type:'string'},edit_closed:{type:'boolean'},title:{type:'string'},category:{type:'string'},started_at:{type:'string',description:'Fecha y hora ISO 8601 con zona horaria'},ended_at:{type:'string',description:'Fecha y hora ISO 8601 con zona horaria'},time_source:{type:'string'},edit_reason:{type:'string'}},required:['id'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}},
+{name:'update_closed_session',description:'Corregir título, categoría, resultado o tiempos de una sesión cerrada. Recalcula duración, conserva auditoría y requiere solicitud explícita del usuario.',inputSchema:{type:'object',properties:{id:{type:'string'},title:{type:'string'},category:{type:'string'},result:{type:'string'},started_at:{type:'string',description:'Fecha y hora ISO 8601 con zona horaria'},ended_at:{type:'string',description:'Fecha y hora ISO 8601 con zona horaria'},time_source:{type:'string'},edit_reason:{type:'string'}},required:['id'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}},
 {name:'record_work',description:'Registrar actividad completada asociada a un negocio real de LINK WORLD. Requiere business_slug del directorio central. Ejecutar solo por solicitud del usuario.',inputSchema:{type:'object',properties:{title:{type:'string'},category:{type:'string'},result:{type:'string'},client_event_id:{type:'string'},business_slug:{type:'string',description:'Slug oficial del negocio en LINK WORLD, p.ej. lama-travelers'}},required:['title','business_slug'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}}
 ];
 TOOLS.push(
@@ -30,6 +31,57 @@ TOOLS.push(
 );
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const str=(s,max)=>typeof s==='string'?s.trim().slice(0,max):'';
+const has=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
+const iso=value=>{
+ const raw=str(value,50),time=Date.parse(raw);
+ return raw&&Number.isFinite(time)?new Date(time).toISOString():'';
+};
+async function updateClosedSession(args,user,jwt,env){
+ const id=str(args.id,36);
+ if(!uuid.test(id))return {ok:false,data:{error:'invalid_session_id'}};
+ const requested={},changed=[];
+ if(has(args,'title')){requested.title=str(args.title,160);if(!requested.title)return {ok:false,data:{error:'title_required'}};changed.push('title')}
+ if(has(args,'category')){requested.category=str(args.category,60);if(!requested.category)return {ok:false,data:{error:'category_required'}};changed.push('category')}
+ if(has(args,'result')){requested.result=str(args.result,4000)||null;changed.push('result')}
+ if(has(args,'started_at')){requested.started_at=iso(args.started_at);if(!requested.started_at)return {ok:false,data:{error:'invalid_started_at'}};changed.push('started_at')}
+ if(has(args,'ended_at')){requested.ended_at=iso(args.ended_at);if(!requested.ended_at)return {ok:false,data:{error:'invalid_ended_at'}};changed.push('ended_at')}
+ if(!changed.length)return {ok:false,data:{error:'no_changes'}};
+ const query='id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(user.id)+'&ended_at=not.is.null';
+ const headers={apikey:env.SUPABASE_PUBLISHABLE_KEY,authorization:'Bearer '+jwt,'content-type':'application/json'};
+ let existing;
+ try{
+  const found=await fetch(SUPA+'/rest/v1/link_task_sessions?'+query+'&select=id,title,category,started_at,ended_at,result,context&limit=1',{headers});
+  if(!found.ok)return {ok:false,data:{error:'session_lookup_failed'}};
+  existing=(await found.json())?.[0];
+ }catch{return {ok:false,data:{error:'session_lookup_unavailable'}}}
+ if(!existing)return {ok:false,data:{error:'not_found_or_open'}};
+ const start=requested.started_at||existing.started_at,end=requested.ended_at||existing.ended_at;
+ const durationSeconds=Math.round((Date.parse(end)-Date.parse(start))/1000);
+ if(!Number.isFinite(durationSeconds)||durationSeconds<0)return {ok:false,data:{error:'end_before_start'}};
+ const previous={};
+ for(const field of changed)previous[field]=field==='result'?String(existing[field]||'').slice(0,500):existing[field];
+ const currentContext=existing.context&&typeof existing.context==='object'&&!Array.isArray(existing.context)?existing.context:{};
+ const history=Array.isArray(currentContext.edit_history)?currentContext.edit_history.slice(-4):[];
+ const correctedAt=new Date().toISOString();
+ const context={...currentContext,corrected_by:'mcp',corrected_at:correctedAt,edit_history:[...history,{
+  at:correctedAt,source:'mcp',reason:str(args.edit_reason,300)||'Corrección autorizada por el usuario',changed_fields:changed,previous
+ }]};
+ if(requested.started_at||requested.ended_at){
+  context.duration_kind='measured';
+  context.time_source=str(args.time_source,80)||'user_reported';
+  context.measured_duration_seconds=durationSeconds;
+  context.measured_duration_minutes=Number((durationSeconds/60).toFixed(2));
+ }
+ const patch={...requested,context};
+ try{
+  const response=await fetch(SUPA+'/rest/v1/link_task_sessions?'+query+'&select=id,title,category,started_at,ended_at,result,context',{
+   method:'PATCH',headers:{...headers,prefer:'return=representation'},body:JSON.stringify(patch)
+  });
+  const data=await response.json().catch(()=>[]);
+  if(!response.ok||!data?.[0])return {ok:false,data:{error:'closed_session_edit_failed'}};
+  return {ok:true,data:{session:data[0],duration_kind:data[0].context?.duration_kind||null,duration_minutes:data[0].context?.measured_duration_minutes??null}};
+ }catch{return {ok:false,data:{error:'closed_session_edit_unavailable'}}}
+}
 export async function getUser(jwt,env){
  if(!jwt||jwt.length>5000||!env.SUPABASE_PUBLISHABLE_KEY)return null;
  try{
@@ -75,6 +127,7 @@ export async function runTool(name,args,user,jwt,env){
    return {ok:false,data:{error:response.status===409?'duplicate_client_event_id':'record_failed'}};
   }catch{return {ok:false,data:{error:'record_unavailable'}}}
  }
+ if(name==='update_closed_session'||(name==='end_session'&&args.edit_closed===true))return updateClosedSession(args,user,jwt,env);
  if(name==='end_session'){
   const id=str(args.id,36);
   if(!uuid.test(id))return {ok:false,data:{error:'invalid_session_id'}};
