@@ -111,7 +111,7 @@ const mcpHandler={async fetch(request,env,ctx){
  if(!Object.prototype.hasOwnProperty.call(body,'id'))return new Response(null,{status:202});
  if(body.method==='initialize')return reply(body.id,{
   protocolVersion:'2025-06-18',capabilities:{tools:{}},
-  serverInfo:{name:'LINK TASK',version:'0.5.0'},
+  serverInfo:{name:'LINK TASK',version:'0.6.0'},
   instructions:'No registras conversaciones automáticamente. Usa herramientas de escritura solo con autorización del usuario.'
  });
  if(body.method==='ping')return reply(body.id,{});
@@ -131,7 +131,7 @@ const defaultHandler={async fetch(request,env){
  const path=new URL(request.url).pathname;
  try{
   if(path==='/google/callback'&&request.method==='GET')return googleCallback(request,env);
-  if(path==='/health')return json({service:'LINK TASK MCP',status:'ready',version:'0.5.0',tools:TOOLS.length,oauth:true});
+  if(path==='/health')return json({service:'LINK TASK MCP',status:'ready',version:'0.6.0',tools:TOOLS.length,oauth:true});
   if(path==='/consent.js')return new Response(consentScript,{headers:{'content-type':'text/javascript; charset=utf-8','cache-control':'no-store'}});
   if(path==='/authorize')return handleAuthorize(request,env);
   if(path==='/')return new Response('LINK TASK MCP — '+RESOURCE,{headers:{'content-type':'text/plain; charset=utf-8'}});
