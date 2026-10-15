@@ -2,7 +2,7 @@
 // Data is written under the user's Supabase JWT; never under a service role.
 // Historical ChatGPT conversations are not accessible to this Worker.
 const SUPA='https://zgbnjlrxzvzpigmwidsp.supabase.co';
-const kinds=new Set(['conversation','decision','evidence']);
+const kinds=new Set(['conversation','decision','task','evidence']);
 const states=new Set(['open','in_progress','done','archived']);
 const slugPattern=/^[a-z0-9][a-z0-9-]{1,99}$/;
 const text=(v,max)=>typeof v==='string'?v.trim().slice(0,max):'';

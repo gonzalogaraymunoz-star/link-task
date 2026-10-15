@@ -21,7 +21,7 @@ Puente remoto MCP para **ChatGPT ↔ LINK TASK ↔ Supabase**, desplegado desde 
 
 Herramientas principales: `get_workspace`, `list_sessions`, `get_insights`, `start_session`, `end_session`, `update_closed_session`, `record_work` y `google_task_update_status`.
 
-**Privacidad:** el MCP no recibe automáticamente el historial privado ni la memoria de ChatGPT. Registra únicamente información enviada por operaciones autorizadas. `record_work` guarda eventos puntuales con `duration_kind=not_measured`; no inventa duración.
+`record_entry` admite `kind=task` para que una tarea operativa aparezca en LINK TASK. Para clientes con un catálogo MCP anterior, `record_work` acepta `action=record_task_entry`; el `client_event_id` estable evita duplicar la misma tarea Google y `reference_url` conserva el enlace de origen.\n\n**Privacidad:** el MCP no recibe automáticamente el historial privado ni la memoria de ChatGPT. Registra únicamente información enviada por operaciones autorizadas. `record_work` guarda eventos puntuales con `duration_kind=not_measured`; no inventa duración.
 
 `update_closed_session` permite corregir una sesión cerrada solo por solicitud explícita. Filtra por el usuario autenticado, exige que la sesión ya esté cerrada, valida el orden de las fechas, recalcula la duración cuando cambian los tiempos y conserva un historial breve de auditoría dentro del contexto. `end_session` acepta el modo compatible `edit_closed=true` para clientes que todavía no hayan actualizado su catálogo de herramientas.
 
