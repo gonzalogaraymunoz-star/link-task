@@ -12,6 +12,8 @@ test('define diecinueve herramientas MCP',()=>{
  assert.equal(TOOLS.filter(t=>t.annotations.readOnlyHint).length,8);
  const statusTool=TOOLS.find(t=>t.name==='google_task_update_status');
  assert.deepEqual(statusTool.inputSchema.required,['tasklist_id','task_id','status']);
+ assert.equal(TOOLS.find(t=>t.name==='google_tasks_list').annotations.readOnlyHint,true);
+ assert.equal(TOOLS.find(t=>t.name==='google_task_create').annotations.readOnlyHint,false);
 });
 test('no se acepta identidad si falta JWT',async()=>{
  assert.equal(await getUser('',env),null);

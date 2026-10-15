@@ -47,7 +47,7 @@ El valor `SUPABASE_PUBLISHABLE_KEY` es una **clave publicable**, no un secreto. 
 ## Google Tasks
 
 El MCP incluye `google_connect`, `google_tasklists`, `google_tasks_list`, `google_task_update_status`, `google_task_create` y `google_disconnect`.
-El usuario abre el enlace generado por `google_connect` y concede acceso a Google Tasks. `google_task_update_status` permite marcar una tarea como `completed` o devolverla a `needsAction`; `google_tasks_list` acepta el modo compatible `action=update_status` para clientes con el catálogo anterior.
+El usuario abre el enlace generado por `google_connect` y concede acceso a Google Tasks. `google_task_update_status` permite marcar una tarea como `completed` o devolverla a `needsAction`; `google_task_create` acepta el modo compatible `action=update_status` para clientes con el catálogo anterior, conservando el permiso de escritura.
 La ruta de retorno configurada en el Worker es:
 
 `https://link-task-mcp.gonzalogaraymunoz.workers.dev/google/callback`
