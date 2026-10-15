@@ -16,7 +16,7 @@ test('registra decisión, reconcilia LINK WORLD y no duplica con mismo evento',a
    calls.push([resource,method]);
    if(resource==='link_world_businesses')return ok([{id:'22222222-2222-4222-8222-222222222222',slug:'caracol',name:'CARACOL',global_id:'LNK-BIZ-TEST'}]);
    if(resource==='link_task_entries'){
-     if(method==='GET')return ok(u.searchParams.has('id')?[...entries.values()].filter(x=>x.id===u.searchParams.get('id')):[...entries.values()]);
+     if(method==='GET')return ok(u.searchParams.has('id')?[...entries.values()].filter(x=>x.id===u.searchParams.get('id')?.replace(/^eq\\./,'')):[...entries.values()]);
      const p=JSON.parse(options.body);
      if(entries.has(p.id))return ok({error:'duplicate'},409);
      const row={...p,created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
@@ -24,7 +24,7 @@ test('registra decisión, reconcilia LINK WORLD y no duplica con mismo evento',a
      return ok([row],201);
    }
    if(resource==='event_bus'){
-     if(method==='GET')return ok([...events.values()].filter(x=>x.dedupe_key===u.searchParams.get('dedupe_key')).map(x=>({id:'event-1',external_id:x.external_id,dedupe_key:x.dedupe_key})));
+     if(method==='GET')return ok([...events.values()].filter(x=>x.dedupe_key===u.searchParams.get('dedupe_key')?.replace(/^eq\\./,'')).map(x=>({id:'event-1',external_id:x.external_id,dedupe_key:x.dedupe_key})));
      const event=JSON.parse(options.body);
      events.set(event.dedupe_key,event);
      return ok(null,201);
