@@ -11,4 +11,36 @@ export const MOBILE_SCRIPT = "\n(function(){\n 'use strict';\n const mobile=wind
    }
  });
  activeObserver.observe(sidebar,{subtree:true,attributes:true,attributeFilter:['class']});
+ // Sidebar navigation must move the MAIN viewport to the destination, not merely select a filter.
+ // Run after legacy onclick and Kanban handlers have rendered the target section.
+ const navTargets={all:()=>document.querySelector('.intro')||document.getElementById('dashboard'),conversation:()=>document.querySelector('.sectiontop'),decision:()=>document.querySelector('.sectiontop'),task:()=>document.getElementById('linkKanban')||document.querySelector('.sectiontop'),evidence:()=>document.querySelector('.sectiontop'),session:()=>document.querySelector('.sectiontop')};
+ const navigateTo=target=>{
+   if(!target)return;
+   const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+   const header=document.querySelector('.top');
+   const offset=(header?.getBoundingClientRect().height||0)+16;
+   const y=window.scrollY+target.getBoundingClientRect().top-offset;
+   window.scrollTo({top:Math.max(0,y),behavior:reduce?'instant':'smooth'});
+ };
+ sidebar.addEventListener('click',event=>{
+   const nav=event.target.closest('[data-nav],[data-business]');
+   if(!nav)return;
+   const section=nav.dataset.nav;
+   const business=nav.dataset.business;
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     if(business){
+       const kanban=document.getElementById('linkKanban');
+       const businessFilter=kanban?.querySelector('select[aria-label="Filtrar negocio"]');
+       if(businessFilter){
+         const option=[...businessFilter.options].find(x=>x.value.toLowerCase()===business.toLowerCase());
+         if(option){businessFilter.value=option.value;businessFilter.dispatchEvent(new Event('change',{bubbles:true}));}
+       }
+       navigateTo(kanban&&!kanban.hidden?kanban:document.querySelector('.sectiontop'));
+     }else if(section==='task'){
+       navigateTo(navTargets.task());
+     }else{
+       navigateTo(navTargets[section]?.()||document.querySelector('.sectiontop'));
+     }
+   }));
+ });
  // Modal ergonomics and accessible keyboard focus, preserving original submit/cancel handlers.\n const modalVisible=()=>Boolean(modal?.classList.contains('open'));\n const modalTargets=()=>modal?[...modal.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),a[href]')].filter(el=>el.getClientRects().length&&!el.closest('.hidden')):[];\n function syncModal(){\n   if(!modal)return;\n   const open=modalVisible();\n   document.body.classList.toggle('modalOpen',open);\n   if(open){\n     if(!modalFocus)modalFocus=document.activeElement;\n     if(mobile.matches&&sidebar.classList.contains('open'))setMenuState(false,false);\n     const target=document.getElementById('closeModal')||modalTargets()[0];\n     if(target&&(!modal.contains(document.activeElement)||document.activeElement===document.body))\n       requestAnimationFrame(()=>target.focus({preventScroll:true}));\n   }else if(modalFocus){\n     if(modalFocus.isConnected)modalFocus.focus({preventScroll:true});\n     modalFocus=null;\n   }\n }\n if(modal){\n   new MutationObserver(syncModal).observe(modal,{attributes:true,attributeFilter:['class']});\n   syncModal();\n   modal.addEventListener('click',event=>{\n     if(event.target===modal)document.getElementById('closeModal')?.click();\n   });\n }\n document.addEventListener('keydown',event=>{\n   if(event.key==='Escape'){\n     if(modalVisible()){document.getElementById('closeModal')?.click();return}\n     if(mobile.matches&&sidebar.classList.contains('open')){\n       event.preventDefault();setMenuState(false,true);\n     }\n     return;\n   }\n   if(event.key!=='Tab')return;\n   const container=modalVisible()?modal:(mobile.matches&&sidebar.classList.contains('open')?sidebar:null);\n   if(!container)return;\n   const options=container===sidebar?visibleTargets():modalTargets();\n   if(!options.length)return;\n   const first=options[0],last=options[options.length-1];\n   if(event.shiftKey&&(document.activeElement===first||!container.contains(document.activeElement))){\n     event.preventDefault();last.focus();\n   }else if(!event.shiftKey&&(document.activeElement===last||!container.contains(document.activeElement))){\n     event.preventDefault();first.focus();\n   }\n });\n // Prevent a hidden drawer or modal from trapping scroll after browser back / page restoration.\n window.addEventListener('pageshow',()=>{\n   if(!mobile.matches)setMenuState(false,false);\n   syncModal();\n });\n})();\n";
