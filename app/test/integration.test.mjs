@@ -86,3 +86,14 @@ test('responsive: navegación accesible y controles móviles mantienen foco y ci
  assert.match(code,/Escape/);
  assert.match(code,/newEntry/);
 });
+
+test('navegación universal: cada registro abre origen o detalle visible',async()=>{
+ const r=await worker.fetch(new Request('https://link-task.example.test/_record-navigation.js'));
+ assert.equal(r.status,200);
+ const js=await r.text();
+ assert.match(js,/linkTaskOpenRecord/);
+ assert.match(js,/scrollIntoView/);
+ assert.match(js,/registro/);
+ const html=enhanceHtml('<html><head></head><body></body></html>');
+ assert.match(html,/_record-navigation\.js\?v=/);
+});
