@@ -1,3 +1,4 @@
+import {entryTool} from './entries.js';
 
 export const APP='https://link-task.gonzalogaraymunoz.workers.dev';
 export const SUPA='https://zgbnjlrxzvzpigmwidsp.supabase.co';
@@ -13,6 +14,10 @@ export const TOOLS=[
 {name:'end_session',description:'Cerrar una sesión activa y guardar resultado.',inputSchema:{type:'object',properties:{id:{type:'string'},result:{type:'string'}},required:['id'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}},
 {name:'record_work',description:'Registrar actividad completada asociada a un negocio real de LINK WORLD. Requiere business_slug del directorio central. Ejecutar solo por solicitud del usuario.',inputSchema:{type:'object',properties:{title:{type:'string'},category:{type:'string'},result:{type:'string'},client_event_id:{type:'string'},business_slug:{type:'string',description:'Slug oficial del negocio en LINK WORLD, p.ej. lama-travelers'}},required:['title','business_slug'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}}
 ];
+TOOLS.push(
+{name:'list_entries',description:'Leer los registros propios de LINK TASK (conversaciones, decisiones, evidencias y tareas). Permite comprobar lo que realmente aparece en la aplicación. No obtiene chats privados.',inputSchema:{type:'object',properties:{kind:{type:'string',enum:['conversation','decision','evidence','task']},limit:{type:'integer',minimum:1,maximum:100}},additionalProperties:false},annotations:{readOnlyHint:true}},
+{name:'record_entry',description:'Registrar explícitamente una conversación relevante, decisión o evidencia en LINK TASK, sin importar chats enteros ni duplicar tareas. Guarda en Supabase y comprueba enlace al event_bus de LINK WORLD. Requiere permiso del usuario, ID de evento estable y negocio oficial o link-world.',inputSchema:{type:'object',properties:{kind:{type:'string',enum:['conversation','decision','evidence']},title:{type:'string'},summary:{type:'string'},business_slug:{type:'string',description:'Slug de negocio oficial o link-world para una decisión transversal'},project_slug:{type:'string',description:'Proyecto oficial activo; omitir cuando no se conozca'},status:{type:'string',enum:['open','in_progress','done','archived']},reference_url:{type:'string',description:'URL HTTPS de evidencia verificable cuando exista'},client_event_id:{type:'string',description:'Clave estable por registro para evitar duplicados entre reintentos'}},required:['kind','title','summary','client_event_id'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}}
+);
 TOOLS.push(
 {name:'link_world_connect_daily_routine',description:'Conectar una rutina diaria existente de LINK TASK al negocio y proyecto de LINK WORLD en Supabase y sincronizar la tarea de hoy. Requiere autorización del usuario.',inputSchema:{type:'object',properties:{routine_id:{type:'string'},business_slug:{type:'string'},project_slug:{type:'string'}},required:['routine_id','business_slug','project_slug'],additionalProperties:false},annotations:{readOnlyHint:false,destructiveHint:false}},
 {name:'google_connect',description:'Generar enlace de autorización Google Tasks para el usuario autenticado. Abrir URL para conectar.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true}},
@@ -41,6 +46,7 @@ async function app(jwt,path,method='GET',body){
  }catch{return {ok:false,status:503,data:{error:'link_task_unavailable'}}}
 }
 export async function runTool(name,args,user,jwt,env){
+ if(name==='list_entries'||name==='record_entry')return entryTool(name,args,user,jwt,env);
  if(name==='get_workspace')return {ok:true,data:{user_id:user.id,email:user.email,app_url:APP}};
  if(name==='list_sessions')return app(jwt,'/api/sessions');
  if(name==='list_businesses'){
