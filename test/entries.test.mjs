@@ -16,7 +16,11 @@ test('registra decisión, reconcilia LINK WORLD y no duplica con mismo evento',a
    calls.push([resource,method]);
    if(resource==='link_world_businesses')return ok([{id:'22222222-2222-4222-8222-222222222222',slug:'caracol',name:'CARACOL',global_id:'LNK-BIZ-TEST'}]);
    if(resource==='link_task_entries'){
-     if(method==='GET')return ok(u.searchParams.has('id')?[...entries.values()].filter(x=>x.id===u.searchParams.get('id')?.slice(3)):[...entries.values()]);
+     if(method==='GET'){
+       let rows=u.searchParams.has('id')?[...entries.values()].filter(x=>x.id===u.searchParams.get('id')?.slice(3)):[...entries.values()];
+       if(u.searchParams.has('kind'))rows=rows.filter(x=>x.kind===u.searchParams.get('kind')?.slice(3));
+       return ok(rows);
+     }
      const p=JSON.parse(options.body);
      if(entries.has(p.id))return ok({error:'duplicate'},409);
      const row={...p,created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
