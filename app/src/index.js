@@ -7,11 +7,13 @@ import {BRAND_CSS} from './link-brand.css.js';
 import {BRAND_SCRIPT} from './link-brand.js';
 import {RESPONSIVE_CSS} from './responsive.css.js';
 import {MOBILE_SCRIPT} from './mobile.js';
+import {RECORD_NAVIGATION_SCRIPT} from './record-navigation.js';
 
 const PREFIX='/_experience';
 const KANBAN_PATH='/_kanban.js';
 const EDITORIAL_PATH='/_task-brief.js';
-const RELEASE='2026-10-15-editorial-task-brief-v1';
+const NAVIGATION_PATH='/_record-navigation.js';
+const RELEASE='2026-10-15-universal-work-navigation-v1';
 
 export function enhanceHtml(html){
  if(!html.includes('</head>')||!html.includes('</body>'))return html;
@@ -21,18 +23,20 @@ export function enhanceHtml(html){
  const responsiveScript='<script src="/_mobile.js?v='+RELEASE+'" defer></script>';
  const kanbanScript='<script src="'+KANBAN_PATH+'?v='+RELEASE+'" defer></script>';
  const editorialScript='<script src="'+EDITORIAL_PATH+'?v='+RELEASE+'" defer></script>';
+ const navigationScript='<script src="'+NAVIGATION_PATH+'?v='+RELEASE+'" defer></script>';
  const earlyMode='<script>try{const stored=localStorage.getItem("linktask_brand_v1")==="1"?localStorage.getItem("linktask_visual_mode"):"day";document.documentElement.dataset.visual=stored==="night"?"night":"day";}catch(e){document.documentElement.dataset.visual="day"}</script>';
  const brandStyles='<link rel="stylesheet" href="/_link-brand.css?v='+RELEASE+'">';
  const responsiveStyles='<link rel="stylesheet" href="/_responsive.css?v='+RELEASE+'">';
  return html.replace('content="width=device-width,initial-scale=1"','content="width=device-width,initial-scale=1,viewport-fit=cover"')
   .replace('</head>',earlyMode+styles+brandStyles+responsiveStyles+'</head>')
-  .replace('</body>',motion+brandingScript+responsiveScript+kanbanScript+editorialScript+'</body>');
+  .replace('</body>',motion+brandingScript+responsiveScript+kanbanScript+editorialScript+navigationScript+'</body>');
 }
 
 export default {
  async fetch(request,env,ctx){
   const url=new URL(request.url);
   if(request.method==='GET'&&url.pathname===KANBAN_PATH){return new Response(KANBAN_SCRIPT,{headers:{'content-type':'text/javascript; charset=utf-8','cache-control':'public, max-age=600'}});}
+  if(request.method==='GET'&&url.pathname===NAVIGATION_PATH){return new Response(RECORD_NAVIGATION_SCRIPT,{headers:{'content-type':'text/javascript; charset=utf-8','cache-control':'public, max-age=600','x-content-type-options':'nosniff'}});}
   if(request.method==='GET'&&url.pathname===EDITORIAL_PATH){return new Response(TASK_BRIEF_SCRIPT,{headers:{'content-type':'text/javascript; charset=utf-8','cache-control':'public, max-age=600','x-content-type-options':'nosniff'}});}
   if(request.method==='GET'&&url.pathname===PREFIX+'.css'){
    return new Response(EXPERIENCE_CSS,{headers:{'content-type':'text/css; charset=utf-8','cache-control':'public, max-age=600','x-content-type-options':'nosniff'}});
