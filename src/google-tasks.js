@@ -65,7 +65,7 @@ export async function googleTool(name,args,user,env){
    if(existing)return {ok:true,data:{...existing,already_existed:true}};
    return call('/users/@me/lists',{method:'POST',body:JSON.stringify({title})});
   }
-  if(name==='google_task_update_status'||(name==='google_tasks_list'&&args.action==='update_status')){
+  if(name==='google_task_update_status'||(name==='google_task_create'&&args.action==='update_status')){
    if(typeof args.tasklist_id!=='string'||!args.tasklist_id.trim()||typeof args.task_id!=='string'||!args.task_id.trim())return {ok:false,data:{error:'tasklist_id_and_task_id_required'}};
    if(!['completed','needsAction'].includes(args.status))return {ok:false,data:{error:'status_must_be_completed_or_needsAction'}};
    return call('/lists/'+encodeURIComponent(args.tasklist_id)+'/tasks/'+encodeURIComponent(args.task_id),{method:'PATCH',body:JSON.stringify({status:args.status})});
