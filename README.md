@@ -19,7 +19,7 @@ Puente remoto MCP para **ChatGPT ↔ LINK TASK ↔ Supabase**, desplegado desde 
 4. Las herramientas consultan la API de LINK TASK o escriben en Supabase con **el JWT de ese usuario**; RLS protege los datos.
 5. LINK TASK refleja las sesiones al actualizar el panel.
 
-Herramientas principales: `get_workspace`, `list_sessions`, `get_insights`, `start_session`, `end_session`, `update_closed_session`, `record_work`.
+Herramientas principales: `get_workspace`, `list_sessions`, `get_insights`, `start_session`, `end_session`, `update_closed_session`, `record_work` y `google_task_update_status`.
 
 **Privacidad:** el MCP no recibe automáticamente el historial privado ni la memoria de ChatGPT. Registra únicamente información enviada por operaciones autorizadas. `record_work` guarda eventos puntuales con `duration_kind=not_measured`; no inventa duración.
 
@@ -46,8 +46,8 @@ El valor `SUPABASE_PUBLISHABLE_KEY` es una **clave publicable**, no un secreto. 
 
 ## Google Tasks
 
-El MCP incluye `google_connect`, `google_tasklists`, `google_tasks_list`, `google_task_create` y `google_disconnect`.
-El usuario abre el enlace generado por `google_connect` y concede acceso a Google Tasks.
+El MCP incluye `google_connect`, `google_tasklists`, `google_tasks_list`, `google_task_update_status`, `google_task_create` y `google_disconnect`.
+El usuario abre el enlace generado por `google_connect` y concede acceso a Google Tasks. `google_task_update_status` permite marcar una tarea como `completed` o devolverla a `needsAction`; `google_tasks_list` acepta el modo compatible `action=update_status` para clientes con el catálogo anterior.
 La ruta de retorno configurada en el Worker es:
 
 `https://link-task-mcp.gonzalogaraymunoz.workers.dev/google/callback`
