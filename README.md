@@ -7,6 +7,14 @@ Puente remoto MCP para **ChatGPT ↔ LINK TASK ↔ Supabase**, desplegado desde 
 - Salud pública: https://link-task-mcp.gonzalogaraymunoz.workers.dev/health
 - OAuth discovery: https://link-task-mcp.gonzalogaraymunoz.workers.dev/.well-known/oauth-authorization-server
 
+## Arquitectura de persistencia — decisión 2026-10-16
+
+**Cloudflare se utiliza para desplegar la aplicación y atender HTTP/MCP, no como almacén definitivo del trabajo de LINK.** Las tareas, sesiones de trabajo, rutinas, sincronizaciones, deduplicaciones y auditoría pertenecen a Supabase LINK CONTROL CENTRAL. Google Tasks/Calendar son las fuentes externas de tareas y agenda.
+
+Se comprobó que `link-task-mcp` todavía usa KV para OAuth, credenciales cifradas y una rutina diaria: es **dependencia heredada, no arquitectura objetivo**. Para evitar superar el cupo gratuito se cambió el cron de cinco minutos a dos ejecuciones al día (`15 4,7 * * *` UTC) con readback verificado. Esto **no significa que la migración haya terminado**. No borrar el namespace ni rotar las claves de cifrado: se desconectarían clientes existentes.
+
+Documentación y plan de corte: [ADR-0001](docs/ADR-0001-storage-boundary.md) · [Seguimiento de migración](https://github.com/gonzalogaraymunoz-star/link-task/issues/15).
+
 ## Estado de implementación
 
 **2026-10-09:** compilado y desplegado en Cloudflare. OAuth discovery comprobado. Siete pruebas unitarias pasadas. Falta terminar una conexión OAuth real con la cuenta del usuario y verificar una actividad escrita desde ChatGPT. No declarar esa etapa completada hasta hacerla.
