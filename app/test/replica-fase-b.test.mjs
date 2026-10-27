@@ -62,3 +62,34 @@ test('Replica backend: validación y persistencia de fecha, verificación y vín
   assert.equal(anonymous.status,401);
  } finally {globalThis.fetch=baseFetch}
 });
+
+
+test('Replica API: un vínculo repetido devuelve exactamente la relación solicitada',async()=>{
+ const previous=globalThis.fetch;
+ const user='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+ const task='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+ const unrelated='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+ const wanted='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+ globalThis.fetch=async (uri,opts={})=>{
+  const url=new URL(String(uri));
+  if(url.pathname==='/auth/v1/user')return Response.json({id:user});
+  if(url.pathname==='/rest/v1/link_task_task_links'){
+   if(opts.method==='POST')return Response.json({code:'23505',message:'duplicate'},{status:409});
+   return Response.json([
+    {id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',task_entry_id:task,related_entry_id:unrelated},
+    {id:'ffffffff-ffff-4fff-8fff-ffffffffffff',task_entry_id:task,related_entry_id:wanted}
+   ]);
+  }
+  throw Error('Unexpected route '+uri);
+ };
+ try{
+  const response=await worker.fetch(new Request('https://link-task.example.test/api/task-links',{
+   method:'POST',headers:{authorization:'Bearer test-token','content-type':'application/json'},
+   body:JSON.stringify({task_id:task,related_entry_id:wanted})
+  }));
+  assert.equal(response.status,201);
+  const payload=await response.json();
+  assert.equal(payload.related_entry_id,wanted);
+  assert.notEqual(payload.related_entry_id,unrelated);
+ }finally{globalThis.fetch=previous}
+});
