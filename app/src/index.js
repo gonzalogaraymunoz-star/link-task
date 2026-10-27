@@ -13,7 +13,7 @@ const PREFIX='/_experience';
 const KANBAN_PATH='/_kanban.js';
 const EDITORIAL_PATH='/_task-brief.js';
 const NAVIGATION_PATH='/_record-navigation.js';
-const RELEASE='2026-10-15-universal-work-navigation-v1';
+const RELEASE='2026-10-27-kanban-operativo-replica-v2';
 
 export function enhanceHtml(html){
  if(!html.includes('</head>')||!html.includes('</body>'))return html;
