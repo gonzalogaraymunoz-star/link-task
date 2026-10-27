@@ -60,7 +60,10 @@ try {
   });
   assert.ok(layout.boardTop<layout.statsTop,'Board must be above metrics');
   assert.ok(layout.pageWidth<=layout.innerWidth+2,'No full-page horizontal overflow at '+width+': '+JSON.stringify(layout));
-  assert.equal(await page.locator('.lkbackitem').filter({hasText:'Backlog sin fecha'}).count(),1,'Backlog auto displayed');
+  assert.equal(await page.locator('.lkbackitem').filter({hasText:'Backlog sin fecha'}).count(),1,'Backlog retains unplanned tasks');
+  if(!await page.locator('#linkKanban .lkbacklog').isVisible()){
+    await page.locator('#linkKanban .lkhead').getByRole('button',{name:/Backlog/}).click();
+  }
   await page.locator('.lkbackitem').filter({hasText:'Backlog sin fecha'}).getByRole('button',{name:'Planificar hoy'}).click();
   await page.locator('.lkcard').filter({hasText:'Backlog sin fecha'}).waitFor({state:'visible',timeout:12000});
   assert.ok(writes.some(x=>x.method==='PATCH'&&x.body.planned_for===day),'Planning must persist API PATCH');
