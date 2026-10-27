@@ -73,7 +73,7 @@ try {
   assert.ok(writes.some(x=>x.body.status==='verification'),'Status change must persist');
   await page.locator('.lkdetail select[aria-label="Elegir evidencia o sesión para vincular"]').selectOption('entry:'+UUID.evidence);
   await page.locator('.lkdetail').getByRole('button',{name:'Vincular'}).click();
-  await page.locator('.lkrelations').getByText('Evidencia · Prueba documental').waitFor({state:'visible',timeout:10000});
+  await page.locator('.lkrelations ul li').getByText('Evidencia · Prueba documental').waitFor({state:'visible',timeout:10000});
   assert.ok(writes.some(x=>x.path==='/api/task-links'),'Evidence linkage must call API');
   await page.locator('.lkhead').getByRole('button',{name:/Nueva tarea/}).click();
   await page.locator('.lkform input[required]').fill('Nueva tarea desde navegador');
