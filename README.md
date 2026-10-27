@@ -15,6 +15,23 @@ Se comprobó que `link-task-mcp` todavía usa KV para OAuth, credenciales cifrad
 
 Documentación y plan de corte: [ADR-0001](docs/ADR-0001-storage-boundary.md) · [Seguimiento de migración](https://github.com/gonzalogaraymunoz-star/link-task/issues/15).
 
+## LINK TASK · Kanban operativo (27-10-2026)
+
+La Fase B de Replica se integró a **esta misma aplicación**, sin duplicar LINK TASK:
+
+- Kanban con filtros por negocio y periodo; estadísticas debajo; diseño adaptado a móvil.
+- Backlog de tareas sin fecha operativa, planificación voluntaria y etapas `open`, `in_progress`, `verification`, `done`; archivo `archived` independiente.
+- Fechas `planned_for` / `due_on`, objetivo, origen, orden y enlaces explícitos a sesiones/evidencias con RLS por usuario.
+- Las tareas históricas permanecen sin planificación automática; no se modificaron fechas ni estados al migrar.
+- La migración `link_task_replica_phase_b_operational_20261027` se aplicó en LINK CONTROL CENTRAL con readback de 47 registros y 30 tareas conservados.
+- El Worker web `link-task` se desplegó en Cloudflare. El Worker `link-task-mcp`, OAuth, KV heredada y el cron no se tocaron.
+
+**Verificación:** CI (23 pruebas MCP, 16 pruebas de aplicación, PostgreSQL/RLS) y smoke HTTP de la URL web publicada, sin escrituras de prueba. No se ha validado el flujo UI completo con una sesión real de navegador ni existe sincronización automática bidireccional de Google Tasks en este nuevo tablero.
+
+- Cambios: [PR #16](https://github.com/gonzalogaraymunoz-star/link-task/pull/16)
+- Smoke web: [GitHub Actions](https://github.com/gonzalogaraymunoz-star/link-task/actions/workflows/live-smoke.yml)
+- Diseño y pruebas: carpeta [replica/](replica/)
+
 ## Estado de implementación
 
 **2026-10-09:** compilado y desplegado en Cloudflare. OAuth discovery comprobado. Siete pruebas unitarias pasadas. Falta terminar una conexión OAuth real con la cuenta del usuario y verificar una actividad escrita desde ChatGPT. No declarar esa etapa completada hasta hacerla.
