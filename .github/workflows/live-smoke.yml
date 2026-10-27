@@ -1,0 +1,17 @@
+name: LINK TASK · Live app smoke
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  read-only-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check deployed application without modifying data
+        run: node app/test/live-smoke.mjs
