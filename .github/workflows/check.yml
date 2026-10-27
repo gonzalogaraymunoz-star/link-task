@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/google-tasks-oauth-20261012
+      - feature/replica-fase-b-kanban
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -16,3 +17,34 @@ jobs:
           node-version: '22'
       - run: npm install --no-package-lock
       - run: npm run check
+      - run: npm run check --prefix app
+
+  schema-rls:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: link_task_test
+          POSTGRES_PASSWORD: qa_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: qa_only
+      PGDATABASE: link_task_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare isolated fixtures
+        run: psql -X -v ON_ERROR_STOP=1 -f replica/test/schema-setup.sql
+      - name: Apply SQL draft on disposable database
+        run: psql -X -v ON_ERROR_STOP=1 -f replica/schema.sql
+      - name: Exercise status, idempotency and RLS
+        run: psql -X -v ON_ERROR_STOP=1 -f replica/test/rls-regression.sql
