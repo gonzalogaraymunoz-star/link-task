@@ -1,0 +1,27 @@
+name: LINK TASK · Browser QA (real frontend, mocked API)
+on:
+  pull_request:
+    paths:
+      - 'app/src/**'
+      - 'app/test/browser-e2e.mjs'
+      - '.github/workflows/browser-qa.yml'
+  workflow_dispatch:
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright browser
+        working-directory: app
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Browser regression against published LINK TASK (mock writes only)
+        working-directory: app
+        run: node test/browser-e2e.mjs
