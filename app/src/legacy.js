@@ -151,7 +151,13 @@ async function createTaskLink(u,p){
  if((!!entry)===(!!session)||entry&&!uuid(entry)||session&&!uuid(session))return {error:true,status:400,result:{error:"invalid_link"}};
  const body={user_id:u.id,task_entry_id:p.task_id,related_entry_id:entry,related_session_id:session};
  let r=await upstream("/rest/v1/link_task_task_links?select=id,task_entry_id,related_entry_id,related_session_id,created_at",u.token,"POST",body);
- if(r.error&&r.status===409)r=await getTaskLinks(u,p.task_id);
+ if(r.error&&r.status===409){
+  const lookup=await getTaskLinks(u,p.task_id);
+  if(lookup.error)return lookup;
+  const match=(lookup.result||[]).find(x=>entry?x.related_entry_id===entry:x.related_session_id===session);
+  if(!match)return {error:true,status:409,result:{error:"task_link_conflict"}};
+  return {result:match,status:200};
+ }
  if(!r.error&&Array.isArray(r.result))r.result=r.result[0]||null;
  return r;
 }
