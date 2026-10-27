@@ -38,8 +38,17 @@ create index if not exists link_task_links_owner_idx on public.link_task_task_li
 alter table public.link_task_task_links enable row level security;
 -- Policy verifies owner on both ends. No cross-user relationships even if IDs leak.
 create policy link_task_links_read on public.link_task_task_links for select to authenticated
- using (user_id=(select auth.uid()) and exists
-   (select 1 from public.link_task_entries e where e.id=task_entry_id and e.user_id=(select auth.uid()) and e.kind='task'));
+ using (
+  user_id=(select auth.uid())
+  and exists (select 1 from public.link_task_entries e where e.id=task_entry_id and e.user_id=(select auth.uid()) and e.kind='task')
+  and (
+   (related_entry_id is not null and exists
+      (select 1 from public.link_task_entries e2 where e2.id=related_entry_id and e2.user_id=(select auth.uid()) and e2.kind='evidence'))
+   or
+   (related_session_id is not null and exists
+      (select 1 from public.link_task_sessions s where s.id=related_session_id and s.user_id=(select auth.uid())))
+  )
+ );
 create policy link_task_links_insert on public.link_task_task_links for insert to authenticated
  with check (
   user_id=(select auth.uid())
