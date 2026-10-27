@@ -10,6 +10,8 @@ alter table public.link_task_entries add column if not exists client_event_id te
 alter table public.link_task_entries drop constraint if exists link_task_entries_status_check;
 alter table public.link_task_entries add constraint link_task_entries_status_check
   check (status in ('open','in_progress','verification','done','archived'));
+alter table public.link_task_entries add constraint link_task_entries_verification_kind_check
+  check (status <> 'verification' or kind='task');
 alter table public.link_task_entries add constraint link_task_entries_position_check
   check (position between 0 and 1000000);
 create index if not exists link_task_entries_plan_idx
