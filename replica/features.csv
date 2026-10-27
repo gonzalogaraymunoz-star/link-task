@@ -1,11 +1,11 @@
 id,screen,feature,priority,clone,notes
-F01,S02,Backlog separado y planificar hoy,must,no,Fecha opcional
-F02,S01,Filtros negocio y día/semana/mes/año,must,no,Filtrar por planned_for
-F03,S01,Arrastre y alternativa accesible,must,no,Estados verification y archived distintos
-F04,S03,Objetivo origen sesiones y evidencias,must,no,Vínculos explícitos con RLS
-F05,S04,Creación real de tareas,must,no,Con JWT y client_event_id
-F06,S03,Archivo separado de verificación,must,no,No transformar históricos
-F07,S01,Kanban antes de estadísticas,must,no,Conservar app y login
-F08,S01,Responsive y navegación por teclado,must,no,390px y 1440px
-F09,S01,No duplicación de registros,should,no,Clave idempotente
-F10,S01,No despliegue antes aprobación,must,yes,Rama aislada
+F01,S02,Backlog separado y planificar hoy,must,partial,UI y API integradas; falta migración y prueba navegador
+F02,S01,Filtros negocio y día/semana/mes/año,must,partial,Filtrado planned_for implementado; sin QA horario de verano en navegador
+F03,S01,Arrastre y alternativa accesible,must,partial,Ambas rutas implementadas; pendiente interacción E2E
+F04,S03,Objetivo origen sesiones y evidencias,must,partial,Ficha y vínculo explícito implementados; RLS sin aplicar ni probar 2 usuarios
+F05,S04,Creación real de tareas,must,partial,API JWT y client_event_id; sin prueba en BD real
+F06,S03,Archivo separado de verificación,must,partial,Estados implementados; migración preparada sin aplicar
+F07,S01,Kanban antes de estadísticas,must,yes,Comprobado en app/src/kanban.js
+F08,S01,Responsive y navegación por teclado,must,partial,CSS y selector accesible; falta prueba 390px/1440px real
+F09,S01,No duplicación de registros,should,partial,Índice de idempotencia preparado; no validado con reintentos reales
+F10,S01,No despliegue antes aprobación,must,yes,Sólo rama; sin cambios a producción
