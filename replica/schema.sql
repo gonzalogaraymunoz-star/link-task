@@ -1,4 +1,4 @@
--- BORRADOR NO EJECUTADO. Antes de aplicar, generar migración con Supabase CLI y probar en staging.
+-- MIGRACIÓN APLICADA a Supabase LINK CONTROL CENTRAL el 2026-10-27 mediante el conector. Mantener como referencia histórica; no reaplicar.
 -- LINK TASK Fase B: planificación independiente, verificación real y vínculos.
 begin;
 alter table public.link_task_entries add column if not exists planned_for date;
