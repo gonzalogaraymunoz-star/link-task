@@ -26,7 +26,12 @@ La Fase B de Replica se integró a **esta misma aplicación**, sin duplicar LINK
 - La migración `link_task_replica_phase_b_operational_20261027` se aplicó en LINK CONTROL CENTRAL con readback de 47 registros y 30 tareas conservados.
 - El Worker web `link-task` se desplegó en Cloudflare. El Worker `link-task-mcp`, OAuth, KV heredada y el cron no se tocaron.
 
-**Verificación:** CI (23 pruebas MCP, 16 pruebas de aplicación, PostgreSQL/RLS) y smoke HTTP de la URL web publicada, sin escrituras de prueba. No se ha validado el flujo UI completo con una sesión real de navegador ni existe sincronización automática bidireccional de Google Tasks en este nuevo tablero.
+**Verificación ampliada, 27-10-2026:** CI de código y seguridad PostgreSQL/RLS, smoke HTTP y Playwright/Chromium sobre el frontend real a 1440 px (escritorio) y 390 px (móvil). En navegador, las rutas privadas se reemplazaron por una API simulada; se comprobaron Backlog, planificación, cambio de estado, vinculación de evidencia, creación de tarea y filtros. Ambos tamaños finalizaron sin excepciones JavaScript ni desbordamiento horizontal. Se corrigió un bug del backend que podía devolver otra evidencia al registrar un vínculo duplicado.
+
+**Límite:** el navegador no usó credenciales del usuario ni modificó registros reales. Sigue pendiente un ensayo con sesión Supabase Auth real y confirmar Google Tasks de extremo a extremo. No se implementó sincronización automática bidireccional.
+
+- [QA Chromium de escritorio y móvil](https://github.com/gonzalogaraymunoz-star/link-task/actions/runs/40584781355)
+- [Integración y corrección del bug · PR #17](https://github.com/gonzalogaraymunoz-star/link-task/pull/17)
 
 - Cambios: [PR #16](https://github.com/gonzalogaraymunoz-star/link-task/pull/16)
 - Smoke web: [GitHub Actions](https://github.com/gonzalogaraymunoz-star/link-task/actions/workflows/live-smoke.yml)
