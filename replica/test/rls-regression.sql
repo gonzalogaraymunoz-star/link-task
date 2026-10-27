@@ -2,6 +2,14 @@
 update public.link_task_entries set status='verification',planned_for=date '2026-10-27',
  objective='Comprobar',origin='ChatGPT' where id='33333333-3333-4333-8333-333333333333';
 update public.link_task_entries set status='archived' where id='55555555-5555-4555-8555-555555555555';
+do $state_guard$ begin
+ begin
+  update public.link_task_entries set status='verification'
+  where id='44444444-4444-4444-8444-444444444444';
+  raise exception 'NON_TASK_VERIFICATION_ALLOWED';
+ exception when check_violation then null;
+ end;
+end $state_guard$;
 do $checks$ begin
  if not exists(select 1 from public.link_task_entries where status='verification' and planned_for='2026-10-27')
  then raise exception 'verification status or planned_for invalid'; end if;
