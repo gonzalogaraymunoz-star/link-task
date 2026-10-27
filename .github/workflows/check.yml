@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/google-tasks-oauth-20261012
+      - feature/replica-fase-b-kanban
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -16,3 +17,4 @@ jobs:
           node-version: '22'
       - run: npm install --no-package-lock
       - run: npm run check
+      - run: npm run check --prefix app
